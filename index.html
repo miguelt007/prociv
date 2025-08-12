@@ -201,7 +201,7 @@
   let todasOcorrencias = [];
 
   const novaAPI = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
-  
+  const apiFallback = 'https://pgavirtual.com/prociv/proxy.php';
 
   if (localStorage.getItem('modo') === 'dark') {
     document.body.classList.add('dark-mode');
