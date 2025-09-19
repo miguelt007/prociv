@@ -68,10 +68,10 @@
         <th>Localização</th>
         <th>Natureza</th>
         <th>Estado</th>
-        <th>Operacionais</th>
-        <th>Veículos</th>
-        <th>Aéreos</th>
-        <th>Aquáticos</th>
+        <th>OP</th>
+        <th>MT</th>
+        <th>MA</th>
+        <th>MAq</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -175,7 +175,7 @@ function atualizarTabela() {
   const estatisticasDiv = document.getElementById('estatisticas');
   const cards = [
     { titulo: 'Ocorrências visíveis', valor: filtradas.length, cor:'#4a90e2' },
-    { titulo: 'Operacionais', valor: totalOperacionais, cor:'#50e3c2' },
+    { titulo: 'Operacionais', valor: totalOperacionais, cor:'#1f7a4c' }, // verde escuro
     { titulo: 'Veículos', valor: totalVeiculos, cor:'#f5a623' },
     { titulo: 'Aéreos', valor: totalAereos, cor:'#9013fe' },
     { titulo: 'Aquáticos', valor: totalAquaticos, cor:'#b8e986' }
@@ -197,7 +197,6 @@ function atualizarTabela() {
     card.innerHTML = `<div>${c.titulo}</div><div style="font-size:1.5em; margin-top:5px;">${c.valor}</div>`;
     estatisticasDiv.appendChild(card);
 
-    // Animação suave
     setTimeout(() => card.classList.add('animar'), 50);
     setTimeout(() => card.classList.remove('animar'), 350);
   });
