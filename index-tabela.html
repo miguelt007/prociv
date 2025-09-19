@@ -122,6 +122,11 @@ function formatarData(d) {
   return data.toLocaleString('pt-PT');
 }
 
+function capitalizar(texto) {
+  if (!texto) return '';
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+}
+
 let todasOcorrencias = [];
 const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
 const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiURL);
@@ -153,12 +158,18 @@ function carregarDados() {
     .catch(err => console.error("Erro ao carregar dados:", err));
 }
 
+function criarOpcoes(array, select) {
+  const valores = [...new Set(array.filter(Boolean))].sort();
+  select.innerHTML = `<option value="">${select.id.replace('Filtro','')}</option>`;
+  valores.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = capitalizar(v);
+    select.appendChild(opt);
+  });
+}
+
 function preencherFiltros() {
-  function criarOpcoes(array, select) {
-    const valores = [...new Set(array.filter(Boolean))].sort();
-    select.innerHTML = `<option value="">${select.id.replace('Filtro','')}</option>`;
-    valores.forEach(v => { const opt = document.createElement('option'); opt.value=v; opt.textContent=v; select.appendChild(opt); });
-  }
   criarOpcoes(todasOcorrencias.map(o => o.Concelho), concelhoFiltro);
   criarOpcoes(todasOcorrencias.map(o => o.Estado), estadoFiltro);
   criarOpcoes(todasOcorrencias.map(o => o.Natureza), naturezaFiltro);
@@ -172,7 +183,12 @@ function atualizarFreguesias() {
     .map(o => o.Freguesia);
   freguesias = [...new Set(freguesias)].sort();
   freguesiaFiltro.innerHTML = `<option value="">Freguesia</option>`;
-  freguesias.forEach(f => { const opt = document.createElement('option'); opt.value=f; opt.textContent=f; freguesiaFiltro.appendChild(opt); });
+  freguesias.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f;
+    opt.textContent = capitalizar(f);
+    freguesiaFiltro.appendChild(opt);
+  });
 }
 
 function atualizarTabela() {
@@ -240,49 +256,39 @@ function atualizarCards(filtradas) {
   const totalVeiculos = filtradas.reduce((s,o)=>s+o.Veiculos,0);
   const totalAereos = filtradas.reduce((s,o)=>s+o.Aereos,0);
   const totalAquaticos = filtradas.reduce((s,o)=>s+o.Aquaticos,0);
+  const totalOcorrencias = filtradas.length;
 
-  const estatisticasDiv = document.getElementById('estatisticas');
-  const cards = [
-    { titulo: 'Ocorrências visíveis', valor: filtradas.length, cor:'#4a90e2' },
-    { titulo: 'Operacionais', valor: totalOperacionais, cor:'#1f7a4c' },
-    { titulo: 'Veículos', valor: totalVeiculos, cor:'#f5a623' },
-    { titulo: 'Aéreos', valor: totalAereos, cor:'#9013fe' },
-    { titulo: 'Aquáticos', valor: totalAquaticos, cor:'#b8e986' }
-  ];
+  const container = document.getElementById('estatisticas');
+  container.innerHTML = '';
 
-  function corTexto(cor) {
-    const r = parseInt(cor.slice(1,3),16);
-    const g = parseInt(cor.slice(3,5),16);
-    const b = parseInt(cor.slice(5,7),16);
-    return (r*0.299 + g*0.587 + b*0.114) > 186 ? '#000' : '#fff';
-  }
-
-  estatisticasDiv.innerHTML = '';
-  cards.forEach(c => {
+  function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff') {
     const card = document.createElement('div');
     card.className = 'card';
-    card.style.backgroundColor = c.cor;
-    card.style.color = corTexto(c.cor);
-    card.innerHTML = `<div>${c.titulo}</div><div style="font-size:1.5em; margin-top:5px;">${c.valor}</div>`;
-    estatisticasDiv.appendChild(card);
-  });
+    card.style.backgroundColor = cor;
+    card.style.color = textoCor;
+    card.innerHTML = `<div>${titulo}</div><div style="font-size: 1.5em; margin-top:5px;">${valor}</div>`;
+    container.appendChild(card);
+  }
+
+  criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff');
+  criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000');
+  criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000');
+  criarCard('Aéreos', totalAereos, '#ffe5b4', '#000');
+  criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000');
 }
 
+// Mostrar mensagem de atualização
 function mostrarAtualizado() {
   msgAtualizado.style.display = 'block';
   setTimeout(() => { msgAtualizado.style.display = 'none'; }, 2000);
 }
 
-// Filtros
-concelhoFiltro.addEventListener('change', () => {
-  atualizarFreguesias();
-  atualizarTabela();
-});
+// Eventos de filtro
+concelhoFiltro.addEventListener('change', () => { atualizarFreguesias(); atualizarTabela(); });
 freguesiaFiltro.addEventListener('change', atualizarTabela);
 estadoFiltro.addEventListener('change', atualizarTabela);
 naturezaFiltro.addEventListener('change', atualizarTabela);
 pesquisaInput.addEventListener('input', atualizarTabela);
-
 document.getElementById('limparFiltros').addEventListener('click', () => {
   concelhoFiltro.value = '';
   freguesiaFiltro.value = '';
@@ -293,9 +299,7 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
 });
 
 // Atualização automática a cada 60 segundos
-setInterval(() => {
-  carregarDados();
-}, 60000);
+setInterval(() => { carregarDados(); }, 60000);
 
 // Carregar inicialmente
 carregarDados();
