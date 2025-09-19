@@ -89,10 +89,10 @@
         <th>Localização</th>
         <th>Natureza</th>
         <th>Estado</th>
-        <th>Operacionais</th>
-        <th>Veículos</th>
-        <th>Aéreos</th>
-        <th>Aquáticos</th>
+        <th>OP</th>
+        <th>MT</th>
+        <th>MA</th>
+        <th>MAq</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -294,7 +294,7 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
 });
 
 // Atualização automática a cada 60 segundos
-setInterval(() => { carregarDados(); }, 60000);
+setInterval(() => { carregarDados(); }, 180000);
 
 // Carregar dados inicialmente
 carregarDados();
