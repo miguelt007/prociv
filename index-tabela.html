@@ -40,7 +40,14 @@
     transition: transform 0.3s, background-color 0.3s;
     position: relative;
   }
-  .card.animar { transform: scale(1.05); }
+
+  /* Animação de piscada para linhas atualizadas */
+  @keyframes piscar {
+    0%, 100% { background-color: inherit; }
+    50% { background-color: yellow; }
+  }
+  .piscar { animation: piscar 1s ease-in-out 3; }
+
   .atualizado {
     position: fixed;
     top: 10px;
@@ -82,10 +89,10 @@
         <th>Localização</th>
         <th>Natureza</th>
         <th>Estado</th>
-        <th>OP</th>
-        <th>MT</th>
-        <th>MA</th>
-        <th>MAq</th>
+        <th>Operacionais</th>
+        <th>Veículos</th>
+        <th>Aéreos</th>
+        <th>Aquáticos</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -116,7 +123,6 @@ function formatarData(d) {
 }
 
 let todasOcorrencias = [];
-
 const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
 const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiURL);
 
@@ -201,6 +207,8 @@ function atualizarTabela() {
     if (existentes[id]) {
       if (existentes[id].innerHTML !== conteudo) {
         existentes[id].innerHTML = conteudo;
+        existentes[id].classList.add('piscar');       // piscada para linhas atualizadas
+        setTimeout(() => existentes[id].classList.remove('piscar'), 3000);
       }
       delete existentes[id];
     } else {
@@ -212,6 +220,10 @@ function atualizarTabela() {
       else if(estadoLower.includes('curso')) tr.className='estado-curso';
       else if(estadoLower.includes('despacho')) tr.className='estado-despacho';
       else if(estadoLower.includes('resolução')) tr.className='estado-resolucao';
+
+      tr.classList.add('piscar'); // piscada inicial para novas linhas
+      setTimeout(() => tr.classList.remove('piscar'), 3000);
+
       tabela.appendChild(tr);
     }
   });
@@ -250,8 +262,6 @@ function atualizarCards(filtradas) {
     card.style.color = corTexto(c.cor);
     card.innerHTML = `<div>${c.titulo}</div><div style="font-size:1.5em; margin-top:5px;">${c.valor}</div>`;
     estatisticasDiv.appendChild(card);
-    setTimeout(() => card.classList.add('animar'), 50);
-    setTimeout(() => card.classList.remove('animar'), 350);
   });
 }
 
@@ -276,9 +286,7 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
 });
 
 // Atualização automática a cada 30 segundos
-setInterval(() => {
-  carregarDados();
-}, 30000);
+setInterval(() => { carregarDados(); }, 30000);
 
 // Carregar inicialmente
 carregarDados();
