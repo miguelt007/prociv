@@ -128,6 +128,7 @@ function capitalizar(texto) {
 }
 
 let todasOcorrencias = [];
+let tabelaAnterior = {}; // armazena hash das linhas anteriores
 const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
 const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiURL);
 
@@ -210,7 +211,6 @@ function atualizarTabela() {
   tabela.innerHTML = '';
   filtradas.forEach(o => {
     const linha = document.createElement('tr');
-
     const estadoTexto = o.Estado ? o.Estado.toLowerCase() : '';
     let classeEstado = '';
     if (estadoTexto.includes('conclusão')) classeEstado = 'estado-conclusao';
@@ -231,8 +231,14 @@ function atualizarTabela() {
       <td>${o.Aereos}</td>
       <td>${o.Aquaticos}</td>
     `;
+
+    const hash = JSON.stringify(o);
+    if (!tabelaAnterior[o.ID_oc] || tabelaAnterior[o.ID_oc] !== hash) {
+      linha.classList.add('piscar-celula');
+    }
+    tabelaAnterior[o.ID_oc] = hash;
+
     tabela.appendChild(linha);
-    linha.classList.add('piscar-celula'); // piscada da linha
   });
 
   atualizarCards(filtradas);
