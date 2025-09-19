@@ -92,8 +92,8 @@ function formatarData(d) {
 
 let todasOcorrencias = [];
 
-const urlAPI = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=json&where=1=1&outFields=*';
-const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(urlAPI);
+const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
+const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiURL);
 
 fetch(proxy)
   .then(res => res.json())
@@ -101,7 +101,7 @@ fetch(proxy)
     todasOcorrencias = data.features.map(f => {
       const p = f.properties;
       return {
-        DataHora: p.DataInicioOcorrencia || p.DataOcorrencia || p.Data || null,
+        DataHora: p.DataInicioOcorrencia,
         Distrito: p.Distrito || '—',
         Concelho: p.Concelho || '—',
         Freguesia: p.Freguesia || '—',
@@ -123,46 +123,37 @@ function preencherFiltros() {
   function criarOpcoes(array, select) {
     const valores = [...new Set(array.filter(Boolean))].sort();
     select.innerHTML = `<option value="">${select.id.replace('Filtro','')}</option>`;
-    valores.forEach(valor => {
+    valores.forEach(v => {
       const opt = document.createElement('option');
-      opt.value = valor; opt.textContent = valor; select.appendChild(opt);
+      opt.value = v; opt.textContent = v; select.appendChild(opt);
     });
   }
-
   criarOpcoes(todasOcorrencias.map(o => o.Distrito), distritoFiltro);
   criarOpcoes(todasOcorrencias.map(o => o.Estado), estadoFiltro);
   criarOpcoes(todasOcorrencias.map(o => o.Natureza), naturezaFiltro);
-
-  atualizarConcelhos(); // popula concelhos e freguesias
+  atualizarConcelhos();
 }
 
 function atualizarConcelhos() {
-  const distSelecionado = distritoFiltro.value;
+  const dist = distritoFiltro.value;
   let concelhos = todasOcorrencias
-    .filter(o => !distSelecionado || o.Distrito === distSelecionado)
+    .filter(o => !dist || o.Distrito === dist)
     .map(o => o.Concelho);
   concelhos = [...new Set(concelhos)].sort();
   concelhoFiltro.innerHTML = `<option value="">Concelho</option>`;
-  concelhos.forEach(c => {
-    const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
-    concelhoFiltro.appendChild(opt);
-  });
-  atualizarFreguesias(); // atualiza freguesias
+  concelhos.forEach(c => { const opt = document.createElement('option'); opt.value=c; opt.textContent=c; concelhoFiltro.appendChild(opt); });
+  atualizarFreguesias();
 }
 
 function atualizarFreguesias() {
-  const distSelecionado = distritoFiltro.value;
-  const concSelecionado = concelhoFiltro.value;
+  const dist = distritoFiltro.value;
+  const conc = concelhoFiltro.value;
   let freguesias = todasOcorrencias
-    .filter(o => (!distSelecionado || o.Distrito === distSelecionado) &&
-                 (!concSelecionado || o.Concelho === concSelecionado))
+    .filter(o => (!dist || o.Distrito === dist) && (!conc || o.Concelho === conc))
     .map(o => o.Freguesia);
   freguesias = [...new Set(freguesias)].sort();
   freguesiaFiltro.innerHTML = `<option value="">Freguesia</option>`;
-  freguesias.forEach(f => {
-    const opt = document.createElement('option'); opt.value=f; opt.textContent=f;
-    freguesiaFiltro.appendChild(opt);
-  });
+  freguesias.forEach(f => { const opt = document.createElement('option'); opt.value=f; opt.textContent=f; freguesiaFiltro.appendChild(opt); });
 }
 
 function atualizarTabela() {
@@ -183,11 +174,10 @@ function atualizarTabela() {
            (!pesquisa || texto.includes(pesquisa));
   });
 
-  // Estatísticas simples
-  let totalOperacionais = filtradas.reduce((sum,o)=>sum+o.Operacionais,0);
-  let totalVeiculos = filtradas.reduce((sum,o)=>sum+o.Veiculos,0);
-  let totalAereos = filtradas.reduce((sum,o)=>sum+o.Aereos,0);
-  let totalAquaticos = filtradas.reduce((sum,o)=>sum+o.Aquaticos,0);
+  const totalOperacionais = filtradas.reduce((s,o)=>s+o.Operacionais,0);
+  const totalVeiculos = filtradas.reduce((s,o)=>s+o.Veiculos,0);
+  const totalAereos = filtradas.reduce((s,o)=>s+o.Aereos,0);
+  const totalAquaticos = filtradas.reduce((s,o)=>s+o.Aquaticos,0);
 
   document.getElementById('estatisticas').innerHTML = `
     <h3>📊 Estatísticas</h3>
@@ -227,16 +217,8 @@ function atualizarTabela() {
 }
 
 // Eventos para filtros dependentes
-distritoFiltro.addEventListener('change', () => {
-  atualizarConcelhos();
-  atualizarTabela();
-});
-
-concelhoFiltro.addEventListener('change', () => {
-  atualizarFreguesias();
-  atualizarTabela();
-});
-
+distritoFiltro.addEventListener('change', () => { atualizarConcelhos(); atualizarTabela(); });
+concelhoFiltro.addEventListener('change', () => { atualizarFreguesias(); atualizarTabela(); });
 freguesiaFiltro.addEventListener('change', atualizarTabela);
 estadoFiltro.addEventListener('change', atualizarTabela);
 naturezaFiltro.addEventListener('change', atualizarTabela);
@@ -253,6 +235,5 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
   atualizarTabela();
 });
 </script>
-
 </body>
 </html>
