@@ -5,62 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ocorrências da Proteção Civil</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f7f7f7;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    #search {
-      margin: 10px 0;
-      padding: 8px;
-      width: 100%;
-      max-width: 400px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      background-color: #fff;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    tr:hover {
-      background-color: #ddd;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
+    h1 { text-align: center; color: #333; }
+    #search { margin: 10px auto; padding: 8px; width: 100%; max-width: 400px; display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: #fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #4CAF50; color: white; cursor: pointer; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #ddd; }
   </style>
 </head>
 <body>
   <h1>Ocorrências da Proteção Civil</h1>
-
   <input type="text" id="search" placeholder="Pesquisar...">
-
   <table id="ocorrencias-table">
     <thead>
       <tr>
-        <th data-column="ID">ID</th>
-        <th data-column="Tipo Ocorrência">Tipo Ocorrência</th>
-        <th data-column="Descrição">Descrição</th>
-        <th data-column="Data">Data</th>
-        <th data-column="Hora">Hora</th>
-        <th data-column="Local">Local</th>
+        <th data-column="OBJECTID">ID</th>
+        <th data-column="TIPO_OCORRENCIA">Tipo Ocorrência</th>
+        <th data-column="DESCRICAO">Descrição</th>
+        <th data-column="DATA_OCORRENCIA">Data</th>
+        <th data-column="HORA_OCORRENCIA">Hora</th>
+        <th data-column="LOCALIDADE">Local</th>
       </tr>
     </thead>
     <tbody>
@@ -69,7 +35,8 @@
   </table>
 
   <script>
-    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+    // URL da API ArcGIS usando f=json + proxy para contornar CORS
+    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?where=1=1&outFields=*&f=json";
     const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
 
     let ocorrencias = [];
@@ -79,17 +46,8 @@
         const response = await fetch(proxy);
         const data = await response.json();
 
-        ocorrencias = data.features.map(feature => {
-          const props = feature.properties;
-          return {
-            'ID': props.id || "",
-            'Tipo Ocorrência': props.tipo_ocorrencia || "",
-            'Descrição': props.descricao || "",
-            'Data': props.data || "",
-            'Hora': props.hora || "",
-            'Local': props.local || ""
-          };
-        });
+        // Cada ocorrência está dentro de data.features ou data.features[i].attributes
+        ocorrencias = data.features.map(f => f.attributes);
 
         renderTable(ocorrencias);
       } catch (error) {
@@ -100,15 +58,15 @@
     function renderTable(data) {
       const tableBody = document.querySelector("#ocorrencias-table tbody");
       tableBody.innerHTML = "";
-      data.forEach(rowData => {
+      data.forEach(item => {
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${rowData['ID']}</td>
-          <td>${rowData['Tipo Ocorrência']}</td>
-          <td>${rowData['Descrição']}</td>
-          <td>${rowData['Data']}</td>
-          <td>${rowData['Hora']}</td>
-          <td>${rowData['Local']}</td>
+          <td>${item.OBJECTID || ""}</td>
+          <td>${item.TIPO_OCORRENCIA || ""}</td>
+          <td>${item.DESCRICAO || ""}</td>
+          <td>${item.DATA_OCORRENCIA || ""}</td>
+          <td>${item.HORA_OCORRENCIA || ""}</td>
+          <td>${item.LOCALIDADE || ""}</td>
         `;
         tableBody.appendChild(row);
       });
@@ -118,9 +76,7 @@
     document.getElementById("search").addEventListener("input", e => {
       const searchTerm = e.target.value.toLowerCase();
       const filtered = ocorrencias.filter(item =>
-        Object.values(item).some(val =>
-          val.toLowerCase().includes(searchTerm)
-        )
+        Object.values(item).some(val => val && val.toString().toLowerCase().includes(searchTerm))
       );
       renderTable(filtered);
     });
