@@ -27,6 +27,10 @@
   .dark-mode .estado-curso { background-color: #5a2e2e; color: #e0e0e0; }
   .dark-mode .estado-despacho { background-color: #5a4a2e; color: #e0e0e0; }
   .dark-mode .estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
+
+  /* Cards de estatísticas */
+  #estatisticas { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+  .card { flex: 1 1 150px; padding: 15px; border-radius: 8px; color: #fff; font-weight: bold; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 </style>
 </head>
 <body>
@@ -159,14 +163,22 @@ function atualizarTabela() {
   const totalAereos = filtradas.reduce((s,o)=>s+o.Aereos,0);
   const totalAquaticos = filtradas.reduce((s,o)=>s+o.Aquaticos,0);
 
-  document.getElementById('estatisticas').innerHTML = `
-    <h3>📊 Estatísticas</h3>
-    <p><strong>Ocorrências visíveis:</strong> ${filtradas.length}</p>
-    <p><strong>Operacionais:</strong> ${totalOperacionais}</p>
-    <p><strong>Veículos:</strong> ${totalVeiculos}</p>
-    <p><strong>Aéreos:</strong> ${totalAereos}</p>
-    <p><strong>Aquáticos:</strong> ${totalAquaticos}</p>
-  `;
+  const estatisticasDiv = document.getElementById('estatisticas');
+  const cards = [
+    { titulo: 'Ocorrências visíveis', valor: filtradas.length, cor:'#4a90e2' },
+    { titulo: 'Operacionais', valor: totalOperacionais, cor:'#50e3c2' },
+    { titulo: 'Veículos', valor: totalVeiculos, cor:'#f5a623' },
+    { titulo: 'Aéreos', valor: totalAereos, cor:'#9013fe' },
+    { titulo: 'Aquáticos', valor: totalAquaticos, cor:'#b8e986' }
+  ];
+  estatisticasDiv.innerHTML = '';
+  cards.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.backgroundColor = c.cor;
+    card.innerHTML = `<div>${c.titulo}</div><div style="font-size:1.5em; margin-top:5px;">${c.valor}</div>`;
+    estatisticasDiv.appendChild(card);
+  });
 
   tabela.innerHTML = '';
   filtradas.forEach(o => {
