@@ -160,7 +160,7 @@ function carregarDados() {
 
 function criarOpcoes(array, select) {
   const valores = [...new Set(array.filter(Boolean))].sort();
-  select.innerHTML = `<option value="">${select.id.replace('Filtro','')}</option>`;
+  select.innerHTML = `<option value="">${capitalizar(select.id.replace('Filtro',''))}</option>`;
   valores.forEach(v => {
     const opt = document.createElement('option');
     opt.value = v;
@@ -192,61 +192,49 @@ function atualizarFreguesias() {
 }
 
 function atualizarTabela() {
+  const concelho = concelhoFiltro.value;
+  const freguesia = freguesiaFiltro.value;
+  const estado = estadoFiltro.value;
+  const natureza = naturezaFiltro.value;
+  const pesquisa = pesquisaInput.value.toLowerCase();
+
   const filtradas = todasOcorrencias.filter(o => {
     const texto = `${o.Concelho} ${o.Freguesia} ${o.Localizacao} ${o.Estado} ${o.Natureza}`.toLowerCase();
-    return (!concelhoFiltro.value || o.Concelho === concelhoFiltro.value) &&
-           (!freguesiaFiltro.value || o.Freguesia === freguesiaFiltro.value) &&
-           (!estadoFiltro.value || o.Estado === estadoFiltro.value) &&
-           (!naturezaFiltro.value || o.Natureza === naturezaFiltro.value) &&
-           (!pesquisaInput.value || texto.includes(pesquisaInput.value.toLowerCase()));
+    return (!concelho || o.Concelho === concelho) &&
+           (!freguesia || o.Freguesia === freguesia) &&
+           (!estado || o.Estado === estado) &&
+           (!natureza || o.Natureza === natureza) &&
+           (!pesquisa || texto.includes(pesquisa));
   });
 
-  const existentes = {};
-  Array.from(tabela.rows).forEach(tr => { existentes[tr.dataset.id] = tr; });
-
-  const novosIDs = new Set();
+  tabela.innerHTML = '';
   filtradas.forEach(o => {
-    const id = o.ID_oc;
-    novosIDs.add(id);
-    if (existentes[id]) {
-      const tr = existentes[id];
-      const valores = [
-        formatarData(o.DataHora), o.Concelho, o.Freguesia,
-        o.Localizacao, o.Natureza, o.Estado,
-        o.Operacionais, o.Veiculos, o.Aereos, o.Aquaticos
-      ];
-      Array.from(tr.cells).forEach((td, i) => {
-        if (td.textContent != String(valores[i])) {
-          td.textContent = valores[i];
-          td.classList.add('piscar-celula');
-          setTimeout(() => td.classList.remove('piscar-celula'), 3000);
-        }
-      });
-      delete existentes[id];
-    } else {
-      const tr = document.createElement('tr');
-      tr.dataset.id = id;
-      const valores = [
-        formatarData(o.DataHora), o.Concelho, o.Freguesia,
-        o.Localizacao, o.Natureza, o.Estado,
-        o.Operacionais, o.Veiculos, o.Aereos, o.Aquaticos
-      ];
-      valores.forEach(v => {
-        const td = document.createElement('td');
-        td.textContent = v;
-        td.classList.add('piscar-celula');
-        setTimeout(() => td.classList.remove('piscar-celula'), 3000);
-        tr.appendChild(td);
-      });
-      const estadoLower = o.Estado.toLowerCase();
-      if(estadoLower.includes('conclusão')) tr.classList.add('estado-conclusao');
-      else if(estadoLower.includes('curso')) tr.classList.add('estado-curso');
-      else if(estadoLower.includes('despacho')) tr.classList.add('estado-despacho');
-      else if(estadoLower.includes('resolução')) tr.classList.add('estado-resolucao');
-      tabela.appendChild(tr);
-    }
+    const linha = document.createElement('tr');
+
+    const estadoTexto = o.Estado ? o.Estado.toLowerCase() : '';
+    let classeEstado = '';
+    if (estadoTexto.includes('conclusão')) classeEstado = 'estado-conclusao';
+    else if (estadoTexto.includes('curso')) classeEstado = 'estado-curso';
+    else if (estadoTexto.includes('despacho')) classeEstado = 'estado-despacho';
+    else if (estadoTexto.includes('resolução')) classeEstado = 'estado-resolucao';
+    if (classeEstado) linha.classList.add(classeEstado);
+
+    linha.innerHTML = `
+      <td>${formatarData(o.DataHora)}</td>
+      <td>${o.Concelho}</td>
+      <td>${o.Freguesia}</td>
+      <td>${o.Localizacao}</td>
+      <td>${o.Natureza}</td>
+      <td>${o.Estado}</td>
+      <td>${o.Operacionais}</td>
+      <td>${o.Veiculos}</td>
+      <td>${o.Aereos}</td>
+      <td>${o.Aquaticos}</td>
+    `;
+    tabela.appendChild(linha);
+    // Piscar nova linha
+    linha.classList.add('piscar-celula');
   });
-  Object.values(existentes).forEach(tr => tr.remove());
 
   atualizarCards(filtradas);
 }
@@ -277,13 +265,11 @@ function atualizarCards(filtradas) {
   criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000');
 }
 
-// Mostrar mensagem de atualização
 function mostrarAtualizado() {
   msgAtualizado.style.display = 'block';
   setTimeout(() => { msgAtualizado.style.display = 'none'; }, 2000);
 }
 
-// Eventos de filtro
 concelhoFiltro.addEventListener('change', () => { atualizarFreguesias(); atualizarTabela(); });
 freguesiaFiltro.addEventListener('change', atualizarTabela);
 estadoFiltro.addEventListener('change', atualizarTabela);
@@ -301,7 +287,7 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
 // Atualização automática a cada 60 segundos
 setInterval(() => { carregarDados(); }, 60000);
 
-// Carregar inicialmente
+// Carregar dados inicialmente
 carregarDados();
 </script>
 </body>
