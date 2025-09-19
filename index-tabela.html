@@ -232,37 +232,39 @@ function atualizarTabela() {
       <td>${o.Aquaticos}</td>
     `;
     tabela.appendChild(linha);
-    // Piscar nova linha
-    linha.classList.add('piscar-celula');
+    linha.classList.add('piscar-celula'); // piscada da linha
   });
 
   atualizarCards(filtradas);
 }
 
 function atualizarCards(filtradas) {
+  const totalOcorrencias = filtradas.length;
   const totalOperacionais = filtradas.reduce((s,o)=>s+o.Operacionais,0);
   const totalVeiculos = filtradas.reduce((s,o)=>s+o.Veiculos,0);
   const totalAereos = filtradas.reduce((s,o)=>s+o.Aereos,0);
   const totalAquaticos = filtradas.reduce((s,o)=>s+o.Aquaticos,0);
-  const totalOcorrencias = filtradas.length;
 
   const container = document.getElementById('estatisticas');
   container.innerHTML = '';
 
-  function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff') {
+  function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff', icone='') {
     const card = document.createElement('div');
     card.className = 'card';
     card.style.backgroundColor = cor;
     card.style.color = textoCor;
-    card.innerHTML = `<div>${titulo}</div><div style="font-size: 1.5em; margin-top:5px;">${valor}</div>`;
+    card.innerHTML = `
+      <div style="font-size:1.2em;">${icone} ${titulo}</div>
+      <div style="font-size:1.5em; margin-top:5px;">${valor}</div>
+    `;
     container.appendChild(card);
   }
 
-  criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff');
-  criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000');
-  criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000');
-  criarCard('Aéreos', totalAereos, '#ffe5b4', '#000');
-  criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000');
+  criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff', '📌');
+  criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000', '👨‍🚒');
+  criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000', '🚒');
+  criarCard('Aéreos', totalAereos, '#ffe5b4', '#000', '🚁');
+  criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000', '🚤');
 }
 
 function mostrarAtualizado() {
@@ -275,6 +277,7 @@ freguesiaFiltro.addEventListener('change', atualizarTabela);
 estadoFiltro.addEventListener('change', atualizarTabela);
 naturezaFiltro.addEventListener('change', atualizarTabela);
 pesquisaInput.addEventListener('input', atualizarTabela);
+
 document.getElementById('limparFiltros').addEventListener('click', () => {
   concelhoFiltro.value = '';
   freguesiaFiltro.value = '';
