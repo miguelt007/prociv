@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocorrências da Proteção Civil</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ocorrências da Proteção Civil</h1>
+  <table id="ocorrencias-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Tipo Ocorrência</th>
+        <th>Descrição</th>
+        <th>Data</th>
+        <th>Hora</th>
+        <th>Local</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dados serão inseridos aqui -->
+    </tbody>
+  </table>
+
+  <script>
+    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+
+    async function fetchOcorrencias() {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const tableBody = document.querySelector("#ocorrencias-table tbody");
+        tableBody.innerHTML = "";
+
+        data.features.forEach(feature => {
+          const props = feature.properties;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${props.id || ""}</td>
+            <td>${props.tipo_ocorrencia || ""}</td>
+            <td>${props.descricao || ""}</td>
+            <td>${props.data || ""}</td>
+            <td>${props.hora || ""}</td>
+            <td>${props.local || ""}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+      } catch (error) {
+        console.error("Erro ao carregar os dados:", error);
+      }
+    }
+
+    fetchOcorrencias();
+  </script>
+</body>
+</html>
