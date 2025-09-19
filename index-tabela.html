@@ -14,10 +14,19 @@
       text-align: center;
       color: #333;
     }
+    #search {
+      margin: 10px 0;
+      padding: 8px;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 10px;
       background-color: #fff;
     }
     th, td {
@@ -28,6 +37,7 @@
     th {
       background-color: #4CAF50;
       color: white;
+      cursor: pointer;
     }
     tr:nth-child(even) {
       background-color: #f2f2f2;
@@ -39,15 +49,18 @@
 </head>
 <body>
   <h1>Ocorrências da Proteção Civil</h1>
+
+  <input type="text" id="search" placeholder="Pesquisar...">
+
   <table id="ocorrencias-table">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>Tipo Ocorrência</th>
-        <th>Descrição</th>
-        <th>Data</th>
-        <th>Hora</th>
-        <th>Local</th>
+        <th data-column="ID">ID</th>
+        <th data-column="Tipo Ocorrência">Tipo Ocorrência</th>
+        <th data-column="Descrição">Descrição</th>
+        <th data-column="Data">Data</th>
+        <th data-column="Hora">Hora</th>
+        <th data-column="Local">Local</th>
       </tr>
     </thead>
     <tbody>
@@ -57,33 +70,73 @@
 
   <script>
     const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+    const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+
+    let ocorrencias = [];
 
     async function fetchOcorrencias() {
       try {
-        const response = await fetch(url);
+        const response = await fetch(proxy);
         const data = await response.json();
 
-        const tableBody = document.querySelector("#ocorrencias-table tbody");
-        tableBody.innerHTML = "";
-
-        data.features.forEach(feature => {
+        ocorrencias = data.features.map(feature => {
           const props = feature.properties;
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${props.id || ""}</td>
-            <td>${props.tipo_ocorrencia || ""}</td>
-            <td>${props.descricao || ""}</td>
-            <td>${props.data || ""}</td>
-            <td>${props.hora || ""}</td>
-            <td>${props.local || ""}</td>
-          `;
-          tableBody.appendChild(row);
+          return {
+            'ID': props.id || "",
+            'Tipo Ocorrência': props.tipo_ocorrencia || "",
+            'Descrição': props.descricao || "",
+            'Data': props.data || "",
+            'Hora': props.hora || "",
+            'Local': props.local || ""
+          };
         });
 
+        renderTable(ocorrencias);
       } catch (error) {
         console.error("Erro ao carregar os dados:", error);
       }
     }
+
+    function renderTable(data) {
+      const tableBody = document.querySelector("#ocorrencias-table tbody");
+      tableBody.innerHTML = "";
+      data.forEach(rowData => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${rowData['ID']}</td>
+          <td>${rowData['Tipo Ocorrência']}</td>
+          <td>${rowData['Descrição']}</td>
+          <td>${rowData['Data']}</td>
+          <td>${rowData['Hora']}</td>
+          <td>${rowData['Local']}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Pesquisa
+    document.getElementById("search").addEventListener("input", e => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = ocorrencias.filter(item =>
+        Object.values(item).some(val =>
+          val.toLowerCase().includes(searchTerm)
+        )
+      );
+      renderTable(filtered);
+    });
+
+    // Ordenação
+    document.querySelectorAll("#ocorrencias-table th").forEach(header => {
+      header.addEventListener("click", () => {
+        const column = header.dataset.column;
+        ocorrencias.sort((a, b) => {
+          if(a[column] < b[column]) return -1;
+          if(a[column] > b[column]) return 1;
+          return 0;
+        });
+        renderTable(ocorrencias);
+      });
+    });
 
     fetchOcorrencias();
   </script>
