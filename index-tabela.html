@@ -1,186 +1,257 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <title>Ocorrências Ativas</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #fff;
-      color: #000;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .dark-mode { background-color: #121212; color: #e0e0e0; }
-    .dark-mode table { background-color: #1e1e1e; color: #e0e0e0; }
-    .dark-mode th { background-color: #2c2c2c; }
-    .dark-mode td { border-color: #444; color: #e0e0e0; }
-    .dark-mode select, .dark-mode input, .dark-mode button {
-      background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #555;
-    }
-    #modoToggle { margin-bottom: 20px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
-    #filtros { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-    select, input { padding: 6px; font-size: 14px; }
-    button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
-    .table-wrapper { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    .estado-conclusao { background-color: #d4f4d7; color: #000; }
-    .estado-curso     { background-color: #f8d4d4; color: #000; }
-    .estado-despacho  { background-color: #ffe5b4; color: #000; }
-    .estado-resolucao { background-color: #d4e4f8; color: #000; }
-    .dark-mode .estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
-    .dark-mode .estado-curso     { background-color: #5a2e2e; color: #e0e0e0; }
-    .dark-mode .estado-despacho  { background-color: #5a4a2e; color: #e0e0e0; }
-    .dark-mode .estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
-  </style>
+<meta charset="UTF-8">
+<title>Ocorrências Ativas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; background-color: #fff; color: #000; transition: 0.3s; }
+  .dark-mode { background-color: #121212; color: #e0e0e0; }
+  .dark-mode table { background-color: #1e1e1e; color: #e0e0e0; }
+  .dark-mode th { background-color: #2c2c2c; }
+  .dark-mode td { border-color: #444; color: #e0e0e0; }
+  .dark-mode select, .dark-mode input, .dark-mode button { background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #555; }
+  #modoToggle { margin-bottom: 20px; padding: 6px 12px; cursor: pointer; }
+  #filtros { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  select, input, button { padding: 6px; font-size: 14px; }
+  button { cursor: pointer; }
+  .table-wrapper { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 800px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background-color: #f2f2f2; }
+  .estado-conclusao { background-color: #d4f4d7; }
+  .estado-curso { background-color: #f8d4d4; }
+  .estado-despacho { background-color: #ffe5b4; }
+  .estado-resolucao { background-color: #d4e4f8; }
+  .dark-mode .estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
+  .dark-mode .estado-curso { background-color: #5a2e2e; color: #e0e0e0; }
+  .dark-mode .estado-despacho { background-color: #5a4a2e; color: #e0e0e0; }
+  .dark-mode .estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
+</style>
 </head>
 <body>
 
-  <button id="modoToggle">🌙 Alternar Modo</button>
-  <h1>Ocorrências Ativas em Portugal</h1>
+<button id="modoToggle">🌙 Alternar Modo</button>
+<h1>Ocorrências Ativas em Portugal</h1>
 
-  <div id="filtros">
-    <select id="distritoFiltro"><option value="">Distrito</option></select>
-    <select id="concelhoFiltro"><option value="">Concelho</option></select>
-    <select id="freguesiaFiltro"><option value="">Freguesia</option></select>
-    <select id="estadoFiltro"><option value="">Estado</option></select>
-    <select id="naturezaFiltro"><option value="">Natureza</option></select>
-    <input type="text" id="pesquisa" placeholder="Pesquisar..." />
-    <button id="limparFiltros">Limpar Filtros</button>
-  </div>
+<div id="filtros">
+  <select id="distritoFiltro"><option value="">Distrito</option></select>
+  <select id="concelhoFiltro"><option value="">Concelho</option></select>
+  <select id="freguesiaFiltro"><option value="">Freguesia</option></select>
+  <select id="estadoFiltro"><option value="">Estado</option></select>
+  <select id="naturezaFiltro"><option value="">Natureza</option></select>
+  <input type="text" id="pesquisa" placeholder="Pesquisar..." />
+  <button id="limparFiltros">Limpar Filtros</button>
+</div>
 
-  <div id="estatisticas"></div>
+<div id="estatisticas"></div>
 
-  <div class="table-wrapper">
-    <table id="ocorrencias">
-      <thead>
-        <tr>
-          <th>Data/Hora</th>
-          <th>Distrito</th>
-          <th>Concelho</th>
-          <th>Freguesia</th>
-          <th>Localização</th>
-          <th>Natureza</th>
-          <th>Estado</th>
-          <th>Operacionais</th>
-          <th>Veículos</th>
-          <th>Aéreos</th>
-          <th>Aquáticos</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+<div class="table-wrapper">
+  <table id="ocorrencias">
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Distrito</th>
+        <th>Concelho</th>
+        <th>Freguesia</th>
+        <th>Localização</th>
+        <th>Natureza</th>
+        <th>Estado</th>
+        <th>Operacionais</th>
+        <th>Veículos</th>
+        <th>Aéreos</th>
+        <th>Aquáticos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
 <script>
-  const tabela = document.querySelector('#ocorrencias tbody');
-  const distritoFiltro = document.getElementById('distritoFiltro');
-  const concelhoFiltro = document.getElementById('concelhoFiltro');
-  const freguesiaFiltro = document.getElementById('freguesiaFiltro');
-  const estadoFiltro = document.getElementById('estadoFiltro');
-  const naturezaFiltro = document.getElementById('naturezaFiltro');
-  const pesquisaInput = document.getElementById('pesquisa');
-  const modoToggle = document.getElementById('modoToggle');
+const tabela = document.querySelector('#ocorrencias tbody');
+const distritoFiltro = document.getElementById('distritoFiltro');
+const concelhoFiltro = document.getElementById('concelhoFiltro');
+const freguesiaFiltro = document.getElementById('freguesiaFiltro');
+const estadoFiltro = document.getElementById('estadoFiltro');
+const naturezaFiltro = document.getElementById('naturezaFiltro');
+const pesquisaInput = document.getElementById('pesquisa');
+const modoToggle = document.getElementById('modoToggle');
 
-  if (localStorage.getItem('modo') === 'dark') {
-    document.body.classList.add('dark-mode');
-  }
+if (localStorage.getItem('modo') === 'dark') document.body.classList.add('dark-mode');
+modoToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('modo', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+});
 
-  modoToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('modo', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-  });
+function formatarData(d) {
+  if (!d) return '—';
+  const data = typeof d === 'number' ? new Date(d) : new Date(d);
+  if (isNaN(data)) return '—';
+  return data.toLocaleString('pt-PT');
+}
 
-  let todasOcorrencias = [];
+let todasOcorrencias = [];
 
-  const novaAPI = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=json&where=1=1&outFields=*';
-  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(novaAPI);
+const urlAPI = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=json&where=1=1&outFields=*';
+const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(urlAPI);
 
-  fetch(proxy)
-    .then(res => res.json())
-    .then(data => {
-      todasOcorrencias = data.features.map(f => ({ ...f.attributes }));
-      preencherFiltros(todasOcorrencias);
-      atualizarTabela();
-    })
-    .catch(err => console.error("Erro ao carregar dados:", err));
-
-  function preencherFiltros(data) {
-    const distritos = [...new Set(data.map(o => o.Distrito).filter(Boolean))];
-    const concelhos = [...new Set(data.map(o => o.Concelho).filter(Boolean))];
-    const freguesias = [...new Set(data.map(o => o.Freguesia).filter(Boolean))];
-    const estados = [...new Set(data.map(o => o.Estado).filter(Boolean))];
-    const naturezas = [...new Set(data.map(o => o.Natureza).filter(Boolean))];
-
-    [distritos, concelhos, freguesias, estados, naturezas].forEach((lista, i) => {
-      const filtro = [distritoFiltro, concelhoFiltro, freguesiaFiltro, estadoFiltro, naturezaFiltro][i];
-      lista.forEach(valor => {
-        const opt = document.createElement('option');
-        opt.value = valor;
-        opt.textContent = valor;
-        filtro.appendChild(opt);
-      });
+fetch(proxy)
+  .then(res => res.json())
+  .then(data => {
+    todasOcorrencias = data.features.map(f => {
+      const p = f.properties;
+      return {
+        DataHora: p.DataInicioOcorrencia || p.DataOcorrencia || p.Data || null,
+        Distrito: p.Distrito || '—',
+        Concelho: p.Concelho || '—',
+        Freguesia: p.Freguesia || '—',
+        Localizacao: p.Localidade || '—',
+        Natureza: p.Natureza || '—',
+        Estado: p.EstadoAgrupado || p.EstadoOcorrencia || '—',
+        Operacionais: p.Operacionais || 0,
+        Veiculos: p.NumeroMeiosTerrestresEnvolvidos || 0,
+        Aereos: p.NumeroMeiosAereosEnvolvidos || 0,
+        Aquaticos: p.NumeroMeiosAquaticos || 0
+      };
     });
-  }
-
-  function atualizarTabela() {
-    const distrito = distritoFiltro.value;
-    const concelho = concelhoFiltro.value;
-    const freguesia = freguesiaFiltro.value;
-    const estado = estadoFiltro.value;
-    const natureza = naturezaFiltro.value;
-    const pesquisa = pesquisaInput.value.toLowerCase();
-
-    const filtradas = todasOcorrencias.filter(o => {
-      const texto = `${o.Distrito} ${o.Concelho} ${o.Freguesia} ${o.Localizacao} ${o.Estado} ${o.Natureza}`.toLowerCase();
-      return (!distrito || o.Distrito === distrito) &&
-             (!concelho || o.Concelho === concelho) &&
-             (!freguesia || o.Freguesia === freguesia) &&
-             (!estado || o.Estado === estado) &&
-             (!natureza || o.Natureza === natureza) &&
-             (!pesquisa || texto.includes(pesquisa));
-    });
-
-    // Estatísticas simples
-    let estatisticasHTML = `<h3>📊 Estatísticas</h3>
-      <p><strong>Ocorrências visíveis:</strong> ${filtradas.length}</p>`;
-    document.getElementById('estatisticas').innerHTML = estatisticasHTML;
-
-    tabela.innerHTML = '';
-    filtradas.forEach(o => {
-      const linha = document.createElement('tr');
-      linha.innerHTML = `
-        <td>${o.DataOcorrencia || '—'} ${o.HoraOcorrencia || ''}</td>
-        <td>${o.Distrito || '—'}</td>
-        <td>${o.Concelho || '—'}</td>
-        <td>${o.Freguesia || '—'}</td>
-        <td>${o.Localizacao || '—'}</td>
-        <td>${o.Natureza || '—'}</td>
-        <td>${o.Estado || '—'}</td>
-        <td>${o.MeiosHumanos || 0}</td>
-        <td>${o.MeiosTerrestres || 0}</td>
-        <td>${o.MeiosAereos || 0}</td>
-        <td>${o.MeiosAquaticos || 0}</td>
-      `;
-      tabela.appendChild(linha);
-    });
-  }
-
-  [distritoFiltro, concelhoFiltro, freguesiaFiltro, estadoFiltro, naturezaFiltro].forEach(f => f.addEventListener('change', atualizarTabela));
-  pesquisaInput.addEventListener('input', atualizarTabela);
-
-  document.getElementById('limparFiltros').addEventListener('click', () => {
-    distritoFiltro.value = '';
-    concelhoFiltro.value = '';
-    freguesiaFiltro.value = '';
-    estadoFiltro.value = '';
-    naturezaFiltro.value = '';
-    pesquisaInput.value = '';
+    preencherFiltros();
     atualizarTabela();
+  })
+  .catch(err => console.error("Erro ao carregar dados:", err));
+
+function preencherFiltros() {
+  function criarOpcoes(array, select) {
+    const valores = [...new Set(array.filter(Boolean))].sort();
+    select.innerHTML = `<option value="">${select.id.replace('Filtro','')}</option>`;
+    valores.forEach(valor => {
+      const opt = document.createElement('option');
+      opt.value = valor; opt.textContent = valor; select.appendChild(opt);
+    });
+  }
+
+  criarOpcoes(todasOcorrencias.map(o => o.Distrito), distritoFiltro);
+  criarOpcoes(todasOcorrencias.map(o => o.Estado), estadoFiltro);
+  criarOpcoes(todasOcorrencias.map(o => o.Natureza), naturezaFiltro);
+
+  atualizarConcelhos(); // popula concelhos e freguesias
+}
+
+function atualizarConcelhos() {
+  const distSelecionado = distritoFiltro.value;
+  let concelhos = todasOcorrencias
+    .filter(o => !distSelecionado || o.Distrito === distSelecionado)
+    .map(o => o.Concelho);
+  concelhos = [...new Set(concelhos)].sort();
+  concelhoFiltro.innerHTML = `<option value="">Concelho</option>`;
+  concelhos.forEach(c => {
+    const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+    concelhoFiltro.appendChild(opt);
   });
+  atualizarFreguesias(); // atualiza freguesias
+}
+
+function atualizarFreguesias() {
+  const distSelecionado = distritoFiltro.value;
+  const concSelecionado = concelhoFiltro.value;
+  let freguesias = todasOcorrencias
+    .filter(o => (!distSelecionado || o.Distrito === distSelecionado) &&
+                 (!concSelecionado || o.Concelho === concSelecionado))
+    .map(o => o.Freguesia);
+  freguesias = [...new Set(freguesias)].sort();
+  freguesiaFiltro.innerHTML = `<option value="">Freguesia</option>`;
+  freguesias.forEach(f => {
+    const opt = document.createElement('option'); opt.value=f; opt.textContent=f;
+    freguesiaFiltro.appendChild(opt);
+  });
+}
+
+function atualizarTabela() {
+  const distrito = distritoFiltro.value;
+  const concelho = concelhoFiltro.value;
+  const freguesia = freguesiaFiltro.value;
+  const estado = estadoFiltro.value;
+  const natureza = naturezaFiltro.value;
+  const pesquisa = pesquisaInput.value.toLowerCase();
+
+  const filtradas = todasOcorrencias.filter(o => {
+    const texto = `${o.Distrito} ${o.Concelho} ${o.Freguesia} ${o.Localizacao} ${o.Estado} ${o.Natureza}`.toLowerCase();
+    return (!distrito || o.Distrito === distrito) &&
+           (!concelho || o.Concelho === concelho) &&
+           (!freguesia || o.Freguesia === freguesia) &&
+           (!estado || o.Estado === estado) &&
+           (!natureza || o.Natureza === natureza) &&
+           (!pesquisa || texto.includes(pesquisa));
+  });
+
+  // Estatísticas simples
+  let totalOperacionais = filtradas.reduce((sum,o)=>sum+o.Operacionais,0);
+  let totalVeiculos = filtradas.reduce((sum,o)=>sum+o.Veiculos,0);
+  let totalAereos = filtradas.reduce((sum,o)=>sum+o.Aereos,0);
+  let totalAquaticos = filtradas.reduce((sum,o)=>sum+o.Aquaticos,0);
+
+  document.getElementById('estatisticas').innerHTML = `
+    <h3>📊 Estatísticas</h3>
+    <p><strong>Ocorrências visíveis:</strong> ${filtradas.length}</p>
+    <p><strong>Operacionais:</strong> ${totalOperacionais}</p>
+    <p><strong>Veículos:</strong> ${totalVeiculos}</p>
+    <p><strong>Aéreos:</strong> ${totalAereos}</p>
+    <p><strong>Aquáticos:</strong> ${totalAquaticos}</p>
+  `;
+
+  tabela.innerHTML = '';
+  filtradas.forEach(o => {
+    const tr = document.createElement('tr');
+    let classe = '';
+    const estadoLower = o.Estado.toLowerCase();
+    if(estadoLower.includes('conclusão')) classe='estado-conclusao';
+    else if(estadoLower.includes('curso')) classe='estado-curso';
+    else if(estadoLower.includes('despacho')) classe='estado-despacho';
+    else if(estadoLower.includes('resolução')) classe='estado-resolucao';
+    tr.className = classe;
+
+    tr.innerHTML = `
+      <td>${formatarData(o.DataHora)}</td>
+      <td>${o.Distrito}</td>
+      <td>${o.Concelho}</td>
+      <td>${o.Freguesia}</td>
+      <td>${o.Localizacao}</td>
+      <td>${o.Natureza}</td>
+      <td>${o.Estado}</td>
+      <td>${o.Operacionais}</td>
+      <td>${o.Veiculos}</td>
+      <td>${o.Aereos}</td>
+      <td>${o.Aquaticos}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+}
+
+// Eventos para filtros dependentes
+distritoFiltro.addEventListener('change', () => {
+  atualizarConcelhos();
+  atualizarTabela();
+});
+
+concelhoFiltro.addEventListener('change', () => {
+  atualizarFreguesias();
+  atualizarTabela();
+});
+
+freguesiaFiltro.addEventListener('change', atualizarTabela);
+estadoFiltro.addEventListener('change', atualizarTabela);
+naturezaFiltro.addEventListener('change', atualizarTabela);
+pesquisaInput.addEventListener('input', atualizarTabela);
+
+document.getElementById('limparFiltros').addEventListener('click', () => {
+  distritoFiltro.value = '';
+  concelhoFiltro.value = '';
+  freguesiaFiltro.value = '';
+  estadoFiltro.value = '';
+  naturezaFiltro.value = '';
+  pesquisaInput.value = '';
+  preencherFiltros();
+  atualizarTabela();
+});
 </script>
 
 </body>
