@@ -2,99 +2,186 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ocorrências da Proteção Civil</title>
+  <title>Ocorrências Ativas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f7f7f7; }
-    h1 { text-align: center; color: #333; }
-    #search { margin: 10px auto; padding: 8px; width: 100%; max-width: 400px; display: block; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: #fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #4CAF50; color: white; cursor: pointer; }
-    tr:nth-child(even) { background-color: #f2f2f2; }
-    tr:hover { background-color: #ddd; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #fff;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dark-mode { background-color: #121212; color: #e0e0e0; }
+    .dark-mode table { background-color: #1e1e1e; color: #e0e0e0; }
+    .dark-mode th { background-color: #2c2c2c; }
+    .dark-mode td { border-color: #444; color: #e0e0e0; }
+    .dark-mode select, .dark-mode input, .dark-mode button {
+      background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #555;
+    }
+    #modoToggle { margin-bottom: 20px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    #filtros { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    select, input { padding: 6px; font-size: 14px; }
+    button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .estado-conclusao { background-color: #d4f4d7; color: #000; }
+    .estado-curso     { background-color: #f8d4d4; color: #000; }
+    .estado-despacho  { background-color: #ffe5b4; color: #000; }
+    .estado-resolucao { background-color: #d4e4f8; color: #000; }
+    .dark-mode .estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
+    .dark-mode .estado-curso     { background-color: #5a2e2e; color: #e0e0e0; }
+    .dark-mode .estado-despacho  { background-color: #5a4a2e; color: #e0e0e0; }
+    .dark-mode .estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
   </style>
 </head>
 <body>
-  <h1>Ocorrências da Proteção Civil</h1>
-  <input type="text" id="search" placeholder="Pesquisar...">
-  <table id="ocorrencias-table">
-    <thead>
-      <tr>
-        <th data-column="OBJECTID">ID</th>
-        <th data-column="TIPO_OCORRENCIA">Tipo Ocorrência</th>
-        <th data-column="DESCRICAO">Descrição</th>
-        <th data-column="DATA_OCORRENCIA">Data</th>
-        <th data-column="HORA_OCORRENCIA">Hora</th>
-        <th data-column="LOCALIDADE">Local</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Dados serão inseridos aqui -->
-    </tbody>
-  </table>
 
-  <script>
-    // URL da API ArcGIS usando f=json + proxy para contornar CORS
-    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?where=1=1&outFields=*&f=json";
-    const proxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+  <button id="modoToggle">🌙 Alternar Modo</button>
+  <h1>Ocorrências Ativas em Portugal</h1>
 
-    let ocorrencias = [];
+  <div id="filtros">
+    <select id="distritoFiltro"><option value="">Distrito</option></select>
+    <select id="concelhoFiltro"><option value="">Concelho</option></select>
+    <select id="freguesiaFiltro"><option value="">Freguesia</option></select>
+    <select id="estadoFiltro"><option value="">Estado</option></select>
+    <select id="naturezaFiltro"><option value="">Natureza</option></select>
+    <input type="text" id="pesquisa" placeholder="Pesquisar..." />
+    <button id="limparFiltros">Limpar Filtros</button>
+  </div>
 
-    async function fetchOcorrencias() {
-      try {
-        const response = await fetch(proxy);
-        const data = await response.json();
+  <div id="estatisticas"></div>
 
-        // Cada ocorrência está dentro de data.features ou data.features[i].attributes
-        ocorrencias = data.features.map(f => f.attributes);
+  <div class="table-wrapper">
+    <table id="ocorrencias">
+      <thead>
+        <tr>
+          <th>Data/Hora</th>
+          <th>Distrito</th>
+          <th>Concelho</th>
+          <th>Freguesia</th>
+          <th>Localização</th>
+          <th>Natureza</th>
+          <th>Estado</th>
+          <th>Operacionais</th>
+          <th>Veículos</th>
+          <th>Aéreos</th>
+          <th>Aquáticos</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-        renderTable(ocorrencias);
-      } catch (error) {
-        console.error("Erro ao carregar os dados:", error);
-      }
-    }
+<script>
+  const tabela = document.querySelector('#ocorrencias tbody');
+  const distritoFiltro = document.getElementById('distritoFiltro');
+  const concelhoFiltro = document.getElementById('concelhoFiltro');
+  const freguesiaFiltro = document.getElementById('freguesiaFiltro');
+  const estadoFiltro = document.getElementById('estadoFiltro');
+  const naturezaFiltro = document.getElementById('naturezaFiltro');
+  const pesquisaInput = document.getElementById('pesquisa');
+  const modoToggle = document.getElementById('modoToggle');
 
-    function renderTable(data) {
-      const tableBody = document.querySelector("#ocorrencias-table tbody");
-      tableBody.innerHTML = "";
-      data.forEach(item => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.OBJECTID || ""}</td>
-          <td>${item.TIPO_OCORRENCIA || ""}</td>
-          <td>${item.DESCRICAO || ""}</td>
-          <td>${item.DATA_OCORRENCIA || ""}</td>
-          <td>${item.HORA_OCORRENCIA || ""}</td>
-          <td>${item.LOCALIDADE || ""}</td>
-        `;
-        tableBody.appendChild(row);
+  if (localStorage.getItem('modo') === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+
+  modoToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('modo', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+  });
+
+  let todasOcorrencias = [];
+
+  const novaAPI = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=json&where=1=1&outFields=*';
+  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(novaAPI);
+
+  fetch(proxy)
+    .then(res => res.json())
+    .then(data => {
+      todasOcorrencias = data.features.map(f => ({ ...f.attributes }));
+      preencherFiltros(todasOcorrencias);
+      atualizarTabela();
+    })
+    .catch(err => console.error("Erro ao carregar dados:", err));
+
+  function preencherFiltros(data) {
+    const distritos = [...new Set(data.map(o => o.Distrito).filter(Boolean))];
+    const concelhos = [...new Set(data.map(o => o.Concelho).filter(Boolean))];
+    const freguesias = [...new Set(data.map(o => o.Freguesia).filter(Boolean))];
+    const estados = [...new Set(data.map(o => o.Estado).filter(Boolean))];
+    const naturezas = [...new Set(data.map(o => o.Natureza).filter(Boolean))];
+
+    [distritos, concelhos, freguesias, estados, naturezas].forEach((lista, i) => {
+      const filtro = [distritoFiltro, concelhoFiltro, freguesiaFiltro, estadoFiltro, naturezaFiltro][i];
+      lista.forEach(valor => {
+        const opt = document.createElement('option');
+        opt.value = valor;
+        opt.textContent = valor;
+        filtro.appendChild(opt);
       });
-    }
+    });
+  }
 
-    // Pesquisa
-    document.getElementById("search").addEventListener("input", e => {
-      const searchTerm = e.target.value.toLowerCase();
-      const filtered = ocorrencias.filter(item =>
-        Object.values(item).some(val => val && val.toString().toLowerCase().includes(searchTerm))
-      );
-      renderTable(filtered);
+  function atualizarTabela() {
+    const distrito = distritoFiltro.value;
+    const concelho = concelhoFiltro.value;
+    const freguesia = freguesiaFiltro.value;
+    const estado = estadoFiltro.value;
+    const natureza = naturezaFiltro.value;
+    const pesquisa = pesquisaInput.value.toLowerCase();
+
+    const filtradas = todasOcorrencias.filter(o => {
+      const texto = `${o.Distrito} ${o.Concelho} ${o.Freguesia} ${o.Localizacao} ${o.Estado} ${o.Natureza}`.toLowerCase();
+      return (!distrito || o.Distrito === distrito) &&
+             (!concelho || o.Concelho === concelho) &&
+             (!freguesia || o.Freguesia === freguesia) &&
+             (!estado || o.Estado === estado) &&
+             (!natureza || o.Natureza === natureza) &&
+             (!pesquisa || texto.includes(pesquisa));
     });
 
-    // Ordenação
-    document.querySelectorAll("#ocorrencias-table th").forEach(header => {
-      header.addEventListener("click", () => {
-        const column = header.dataset.column;
-        ocorrencias.sort((a, b) => {
-          if(a[column] < b[column]) return -1;
-          if(a[column] > b[column]) return 1;
-          return 0;
-        });
-        renderTable(ocorrencias);
-      });
-    });
+    // Estatísticas simples
+    let estatisticasHTML = `<h3>📊 Estatísticas</h3>
+      <p><strong>Ocorrências visíveis:</strong> ${filtradas.length}</p>`;
+    document.getElementById('estatisticas').innerHTML = estatisticasHTML;
 
-    fetchOcorrencias();
-  </script>
+    tabela.innerHTML = '';
+    filtradas.forEach(o => {
+      const linha = document.createElement('tr');
+      linha.innerHTML = `
+        <td>${o.DataOcorrencia || '—'} ${o.HoraOcorrencia || ''}</td>
+        <td>${o.Distrito || '—'}</td>
+        <td>${o.Concelho || '—'}</td>
+        <td>${o.Freguesia || '—'}</td>
+        <td>${o.Localizacao || '—'}</td>
+        <td>${o.Natureza || '—'}</td>
+        <td>${o.Estado || '—'}</td>
+        <td>${o.MeiosHumanos || 0}</td>
+        <td>${o.MeiosTerrestres || 0}</td>
+        <td>${o.MeiosAereos || 0}</td>
+        <td>${o.MeiosAquaticos || 0}</td>
+      `;
+      tabela.appendChild(linha);
+    });
+  }
+
+  [distritoFiltro, concelhoFiltro, freguesiaFiltro, estadoFiltro, naturezaFiltro].forEach(f => f.addEventListener('change', atualizarTabela));
+  pesquisaInput.addEventListener('input', atualizarTabela);
+
+  document.getElementById('limparFiltros').addEventListener('click', () => {
+    distritoFiltro.value = '';
+    concelhoFiltro.value = '';
+    freguesiaFiltro.value = '';
+    estadoFiltro.value = '';
+    naturezaFiltro.value = '';
+    pesquisaInput.value = '';
+    atualizarTabela();
+  });
+</script>
+
 </body>
 </html>
