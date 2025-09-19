@@ -41,12 +41,12 @@
     position: relative;
   }
 
-  /* Animação de piscada para linhas atualizadas */
-  @keyframes piscar {
+  /* Animação de piscada célula a célula */
+  @keyframes piscar-celula {
     0%, 100% { background-color: inherit; }
     50% { background-color: yellow; }
   }
-  .piscar { animation: piscar 1s ease-in-out 3; }
+  .piscar-celula { animation: piscar-celula 1s ease-in-out 3; }
 
   .atualizado {
     position: fixed;
@@ -192,38 +192,41 @@ function atualizarTabela() {
   filtradas.forEach(o => {
     const id = o.ID_oc;
     novosIDs.add(id);
-    const conteudo = `
-      <td>${formatarData(o.DataHora)}</td>
-      <td>${o.Concelho}</td>
-      <td>${o.Freguesia}</td>
-      <td>${o.Localizacao}</td>
-      <td>${o.Natureza}</td>
-      <td>${o.Estado}</td>
-      <td>${o.Operacionais}</td>
-      <td>${o.Veiculos}</td>
-      <td>${o.Aereos}</td>
-      <td>${o.Aquaticos}</td>
-    `;
     if (existentes[id]) {
-      if (existentes[id].innerHTML !== conteudo) {
-        existentes[id].innerHTML = conteudo;
-        existentes[id].classList.add('piscar');       // piscada para linhas atualizadas
-        setTimeout(() => existentes[id].classList.remove('piscar'), 3000);
-      }
+      const tr = existentes[id];
+      const valores = [
+        formatarData(o.DataHora), o.Concelho, o.Freguesia,
+        o.Localizacao, o.Natureza, o.Estado,
+        o.Operacionais, o.Veiculos, o.Aereos, o.Aquaticos
+      ];
+      Array.from(tr.cells).forEach((td, i) => {
+        if (td.textContent != String(valores[i])) {
+          td.textContent = valores[i];
+          td.classList.add('piscar-celula');
+          setTimeout(() => td.classList.remove('piscar-celula'), 3000);
+        }
+      });
       delete existentes[id];
     } else {
       const tr = document.createElement('tr');
       tr.dataset.id = id;
-      tr.innerHTML = conteudo;
+      const valores = [
+        formatarData(o.DataHora), o.Concelho, o.Freguesia,
+        o.Localizacao, o.Natureza, o.Estado,
+        o.Operacionais, o.Veiculos, o.Aereos, o.Aquaticos
+      ];
+      valores.forEach(v => {
+        const td = document.createElement('td');
+        td.textContent = v;
+        td.classList.add('piscar-celula');
+        setTimeout(() => td.classList.remove('piscar-celula'), 3000);
+        tr.appendChild(td);
+      });
       const estadoLower = o.Estado.toLowerCase();
-      if(estadoLower.includes('conclusão')) tr.className='estado-conclusao';
-      else if(estadoLower.includes('curso')) tr.className='estado-curso';
-      else if(estadoLower.includes('despacho')) tr.className='estado-despacho';
-      else if(estadoLower.includes('resolução')) tr.className='estado-resolucao';
-
-      tr.classList.add('piscar'); // piscada inicial para novas linhas
-      setTimeout(() => tr.classList.remove('piscar'), 3000);
-
+      if(estadoLower.includes('conclusão')) tr.classList.add('estado-conclusao');
+      else if(estadoLower.includes('curso')) tr.classList.add('estado-curso');
+      else if(estadoLower.includes('despacho')) tr.classList.add('estado-despacho');
+      else if(estadoLower.includes('resolução')) tr.classList.add('estado-resolucao');
       tabela.appendChild(tr);
     }
   });
@@ -271,11 +274,15 @@ function mostrarAtualizado() {
 }
 
 // Filtros
-concelhoFiltro.addEventListener('change', () => { atualizarFreguesias(); atualizarTabela(); });
+concelhoFiltro.addEventListener('change', () => {
+  atualizarFreguesias();
+  atualizarTabela();
+});
 freguesiaFiltro.addEventListener('change', atualizarTabela);
 estadoFiltro.addEventListener('change', atualizarTabela);
 naturezaFiltro.addEventListener('change', atualizarTabela);
 pesquisaInput.addEventListener('input', atualizarTabela);
+
 document.getElementById('limparFiltros').addEventListener('click', () => {
   concelhoFiltro.value = '';
   freguesiaFiltro.value = '';
@@ -285,12 +292,13 @@ document.getElementById('limparFiltros').addEventListener('click', () => {
   atualizarTabela();
 });
 
-// Atualização automática a cada 30 segundos
-setInterval(() => { carregarDados(); }, 30000);
+// Atualização automática a cada 60 segundos
+setInterval(() => {
+  carregarDados();
+}, 60000);
 
 // Carregar inicialmente
 carregarDados();
 </script>
-
 </body>
 </html>
