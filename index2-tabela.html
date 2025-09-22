@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela Ocorrências</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    #filtros {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    select {
+      padding: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    tr.piscar-celula {
+      animation: piscar 1s ease-in-out 2;
+    }
+    @keyframes piscar {
+      0% { background-color: yellow; }
+      100% { background-color: white; }
+    }
+    .cards {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .card {
+      padding: 15px;
+      border-radius: 10px;
+      min-width: 150px;
+      text-align: center;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      margin: 0 0 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ocorrências PROCIV</h1>
+
+  <div id="filtros">
+    <select id="concelhoFiltro"></select>
+    <select id="freguesiaFiltro"></select>
+    <select id="naturezaFiltro"></select>
+    <select id="estadoFiltro"></select>
+  </div>
+
+  <div id="cardsContainer" class="cards"></div>
+
+  <table id="tabelaOcorrencias">
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Concelho</th>
+        <th>Freguesia</th>
+        <th>Localidade</th>
+        <th>Natureza</th>
+        <th>Estado</th>
+        <th>Operacionais</th>
+        <th>Terrestres</th>
+        <th>Aéreos</th>
+        <th>Aquáticos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+    let ocorrencias = [];
+    let tabelaAnterior = {};
+
+    function capitalizar(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+
+    function formatarData(dataStr) {
+      if (!dataStr) return '—';
+      const d = new Date(dataStr);
+      return d.toLocaleString('pt-PT');
+    }
+
+    function criarOpcoes(array, select) {
+      const valores = [...new Set(array.filter(Boolean))].sort();
+      select.innerHTML = `<option value="">${capitalizar(select.id.replace('Filtro',''))}</option>`;
+      valores.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = capitalizar(v);
+        select.appendChild(opt);
+      });
+    }
+
+    function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff', icone='') {
+      const container = document.getElementById('cardsContainer');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.backgroundColor = cor;
+      card.style.color = textoCor;
+      card.innerHTML = `
+        <div style="font-size:1.2em;">${icone} ${titulo}</div>
+        <div style="font-size:1.5em; margin-top:5px;">${valor}</div>
+      `;
+      container.appendChild(card);
+    }
+
+    function atualizarCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
+      const totalOcorrencias = ocorrencias.length;
+      const totalOperacionais = ocorrencias.reduce((s, o) => s + (o.Operacionais || 0), 0);
+      const totalVeiculos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosTerrestresEnvolvidos || 0), 0);
+      const totalAereos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAereosEnvolvidos || 0), 0);
+      const totalAquaticos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAquaticos || 0), 0);
+
+      criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff', '📌');
+      criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000', '👨‍🚒');
+      criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000', '🚒');
+      criarCard('Aéreos', totalAereos, '#ffe5b4', '#000', '🚁');
+      criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000', '🚤');
+
+      // 🔥 Ocorrências Críticas
+      const criticas = ocorrencias.filter(o => {
+        const estadoOk = o.EstadoAgrupado === "Em Curso" || o.EstadoAgrupado === "Em Conclusão";
+        const duracaoOk = o.DuracaoMinutos && o.DuracaoMinutos >= 180; // 3h+
+        const operacionaisOk = (o.Operacionais || 0) >= 100;
+        return estadoOk && duracaoOk && operacionaisOk;
+      });
+
+      if (criticas.length > 0) {
+        const criticasDiv = document.createElement('div');
+        criticasDiv.className = 'card';
+        criticasDiv.style.backgroundColor = '#ff4d4d';
+        criticasDiv.style.color = '#fff';
+        criticasDiv.style.flex = '1 1 100%';
+        criticasDiv.innerHTML = `<h3>🔥 Ocorrências Críticas (${criticas.length})</h3>`;
+        
+        criticas.forEach(o => {
+          criticasDiv.innerHTML += `
+            <div style="margin-bottom:8px; padding:6px; border-bottom:1px solid rgba(255,255,255,0.3)">
+              <strong>${o.Concelho || '—'} - ${o.Freguesia || o.Localidade || '—'}</strong><br>
+              👨‍🚒 ${o.Operacionais || 0} | 🚒 ${o.NumeroMeiosTerrestresEnvolvidos || 0} | 🚁 ${o.NumeroMeiosAereosEnvolvidos || 0} | 🚤 ${o.NumeroMeiosAquaticos || 0}
+            </div>
+          `;
+        });
+
+        container.appendChild(criticasDiv);
+      }
+    }
+
+    function atualizarTabela() {
+      const tabela = document.querySelector('#tabelaOcorrencias tbody');
+      tabela.innerHTML = '';
+
+      const concelhoFiltro = document.getElementById('concelhoFiltro').value;
+      const freguesiaFiltro = document.getElementById('freguesiaFiltro').value;
+      const naturezaFiltro = document.getElementById('naturezaFiltro').value;
+      const estadoFiltro = document.getElementById('estadoFiltro').value;
+
+      const filtradas = ocorrencias.filter(o => {
+        return (!concelhoFiltro || o.Concelho === concelhoFiltro) &&
+               (!freguesiaFiltro || o.Freguesia === freguesiaFiltro) &&
+               (!naturezaFiltro || o.Natureza === naturezaFiltro) &&
+               (!estadoFiltro || o.EstadoAgrupado === estadoFiltro);
+      });
+
+      filtradas.forEach(o => {
+        const linha = document.createElement('tr');
+        linha.innerHTML = `
+          <td>${formatarData(o.DataInicioOcorrencia)}</td>
+          <td>${o.Concelho || '—'}</td>
+          <td>${o.Freguesia || '—'}</td>
+          <td>${o.Localidade || '—'}</td>
+          <td>${o.Natureza || '—'}</td>
+          <td>${o.EstadoAgrupado || '—'}</td>
+          <td>${o.Operacionais || 0}</td>
+          <td>${o.NumeroMeiosTerrestresEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAereosEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAquaticos || 0}</td>
+        `;
+
+        const id = o.ID_oc;
+        const hash = JSON.stringify(o);
+        if (!tabelaAnterior[id] || tabelaAnterior[id] !== hash) {
+          linha.classList.add('piscar-celula');
+        }
+        tabelaAnterior[id] = hash;
+
+        tabela.appendChild(linha);
+      });
+    }
+
+    async function carregarDados() {
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        ocorrencias = data.features.map(f => f.properties);
+
+        criarOpcoes(ocorrencias.map(o => o.Concelho), document.getElementById('concelhoFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Freguesia), document.getElementById('freguesiaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Natureza), document.getElementById('naturezaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.EstadoAgrupado), document.getElementById('estadoFiltro'));
+
+        atualizarCards();
+        atualizarTabela();
+      } catch (e) {
+        console.error("Erro ao carregar dados", e);
+      }
+    }
+
+    document.querySelectorAll('#filtros select').forEach(sel => sel.addEventListener('change', atualizarTabela));
+
+    carregarDados();
+    setInterval(carregarDados, 60000); // atualiza a cada 1 min
+  </script>
+</body>
+</html>
