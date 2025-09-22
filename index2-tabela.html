@@ -17,6 +17,7 @@
       gap: 10px;
       margin-bottom: 20px;
       justify-content: center;
+      flex-wrap: wrap;
     }
     select {
       padding: 6px;
@@ -44,24 +45,26 @@
     }
     .cards {
       display: flex;
-      gap: 15px;
+      gap: 10px;
       justify-content: center;
       flex-wrap: wrap;
       margin-bottom: 20px;
     }
     .card {
-      padding: 15px;
+      padding: 10px;
       border-radius: 10px;
-      min-width: 150px;
+      min-width: 120px;
       text-align: center;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      flex: 0 0 auto;
     }
     .card h3 {
-      margin: 0 0 10px;
+      margin: 0 0 5px;
+      font-size: 1em;
     }
     .ocorrencia-critica {
-      margin-bottom: 8px;
-      padding: 6px;
+      margin-bottom: 6px;
+      padding: 5px;
       border-bottom: 1px solid rgba(255,255,255,0.3);
       text-align: left;
     }
@@ -130,8 +133,8 @@
       card.style.backgroundColor = cor;
       card.style.color = textoCor;
       card.innerHTML = `
-        <div style="font-size:1.2em;">${icone} ${titulo}</div>
-        <div style="font-size:1.5em; margin-top:5px;">${valor}</div>
+        <div style="font-size:1.1em;">${icone} ${titulo}</div>
+        <div style="font-size:1.4em; margin-top:5px;">${valor}</div>
       `;
       container.appendChild(card);
     }
