@@ -2,325 +2,257 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Ocorrências Ativas</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <title>Tabela Ocorrências</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #fff;
-      color: #000;
-      transition: background-color 0.3s, color 0.3s;
+      margin: 20px;
+      background: #f4f4f4;
     }
-
-    .dark-mode {
-      background-color: #121212;
-      color: #e0e0e0;
+    h1 {
+      text-align: center;
     }
-
-    #modoToggle {
-      margin-bottom: 20px;
-      padding: 6px 12px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
     #filtros {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 20px;
+      justify-content: center;
     }
-
-    select, input, button {
+    select {
       padding: 6px;
-      font-size: 14px;
     }
-
-    button {
-      cursor: pointer;
-    }
-
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 800px;
+      margin-top: 20px;
+      background: white;
     }
-
     th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
+      border: 1px solid #ddd;
+      padding: 6px;
       text-align: left;
     }
-
     th {
-      background-color: #f2f2f2;
+      background: #eee;
     }
-
-    .estado-conclusao { background-color: #d4f4d7; color: #000; }
-    .estado-curso     { background-color: #f8d4d4; color: #000; }
-    .estado-despacho  { background-color: #ffe5b4; color: #000; }
-    .estado-resolucao { background-color: #d4e4f8; color: #000; }
-
-    /* Cards */
-    #cardsContainer {
+    tr.piscar-celula {
+      animation: piscar 1s ease-in-out 2;
+    }
+    @keyframes piscar {
+      0% { background-color: yellow; }
+      100% { background-color: white; }
+    }
+    .cards {
       display: flex;
-      flex-wrap: wrap;
       gap: 15px;
-      margin-bottom: 25px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
-
     .card {
-      flex: 1 1 180px;
       padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      min-width: 150px;
+      text-align: center;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
     }
-
     .card h3 {
       margin: 0 0 10px;
-      font-size: 18px;
     }
-
-    .card p {
-      font-size: 22px;
-      font-weight: bold;
-      margin: 0;
-    }
-
-    .dark-mode .card {
-      box-shadow: 0 2px 6px rgba(255,255,255,0.1);
-    }
-
-    /* Card crítico */
-    .card.critico {
-      background-color: #ff4d4d;
-      color: #fff;
-      flex: 1 1 100%;
-    }
-
-    .card.critico h3 {
-      margin-bottom: 12px;
-    }
-
     .ocorrencia-critica {
+      margin-bottom: 8px;
       padding: 6px;
       border-bottom: 1px solid rgba(255,255,255,0.3);
-      margin-bottom: 6px;
     }
   </style>
 </head>
 <body>
-
-  <button id="modoToggle">🌙 Alternar Modo</button>
-  <h1>Ocorrências Ativas em Portugal</h1>
+  <h1>Ocorrências PROCIV</h1>
 
   <div id="filtros">
-    <select id="concelhoFiltro"><option value="">Concelho</option></select>
-    <select id="freguesiaFiltro"><option value="">Freguesia</option></select>
-    <select id="estadoFiltro"><option value="">Estado</option></select>
-    <select id="naturezaFiltro"><option value="">Natureza</option></select>
-    <input type="text" id="pesquisa" placeholder="Pesquisar..." />
-    <button id="limparFiltros">Limpar Filtros</button>
+    <select id="concelhoFiltro"></select>
+    <select id="freguesiaFiltro"></select>
+    <select id="naturezaFiltro"></select>
+    <select id="estadoFiltro"></select>
   </div>
 
-  <!-- Cards -->
-  <div id="cardsContainer"></div>
+  <div id="cardsContainer" class="cards"></div>
 
-  <div class="table-wrapper">
-    <table id="ocorrencias">
-      <thead>
-        <tr>
-          <th>Data/Hora</th>
-          <th>Concelho</th>
-          <th>Freguesia</th>
-          <th>Localização</th>
-          <th>Natureza</th>
-          <th>Estado</th>
-          <th>Operacionais</th>
-          <th>Veículos</th>
-          <th>Aéreos</th>
-          <th>Aquáticos</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="tabelaOcorrencias">
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Concelho</th>
+        <th>Freguesia</th>
+        <th>Localidade</th>
+        <th>Natureza</th>
+        <th>Estado</th>
+        <th>Operacionais</th>
+        <th>Terrestres</th>
+        <th>Aéreos</th>
+        <th>Aquáticos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<script>
-  const tabela = document.querySelector('#ocorrencias tbody');
-  const concelhoFiltro = document.getElementById('concelhoFiltro');
-  const freguesiaFiltro = document.getElementById('freguesiaFiltro');
-  const estadoFiltro = document.getElementById('estadoFiltro');
-  const naturezaFiltro = document.getElementById('naturezaFiltro');
-  const pesquisaInput = document.getElementById('pesquisa');
-  const modoToggle = document.getElementById('modoToggle');
-  let ocorrencias = [];
+  <script>
+    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+    let ocorrencias = [];
+    let tabelaAnterior = {};
 
-  const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
-
-  if (localStorage.getItem('modo') === 'dark') {
-    document.body.classList.add('dark-mode');
-  }
-
-  modoToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-    const modoAtual = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-    localStorage.setItem('modo', modoAtual);
-  });
-
-  function formatarDataHora(dataISO) {
-    if (!dataISO) return '—';
-    const d = new Date(dataISO);
-    return isNaN(d) ? '—' : d.toLocaleString('pt-PT');
-  }
-
-  fetch(apiURL)
-    .then(res => res.json())
-    .then(data => {
-      ocorrencias = data.features.map(f => f.properties);
-      preencherFiltros(ocorrencias);
-      atualizarTabelaEcards();
-    });
-
-  function preencherFiltros(data) {
-    const concelhos = [...new Set(data.map(o => o.Concelho).filter(Boolean))];
-    const freguesias = [...new Set(data.map(o => o.Freguesia).filter(Boolean))];
-    const estados = [...new Set(data.map(o => o.EstadoAgrupado).filter(Boolean))];
-    const naturezas = [...new Set(data.map(o => o.Natureza).filter(Boolean))];
-
-    [concelhos, freguesias, estados, naturezas].forEach((lista, i) => {
-      const filtro = [concelhoFiltro, freguesiaFiltro, estadoFiltro, naturezaFiltro][i];
-      lista.forEach(valor => {
-        const opt = document.createElement('option');
-        opt.value = valor;
-        opt.textContent = valor;
-        filtro.appendChild(opt);
-      });
-    });
-  }
-
-  function atualizarTabelaEcards() {
-    const concelho = concelhoFiltro.value;
-    const freguesia = freguesiaFiltro.value;
-    const estado = estadoFiltro.value;
-    const natureza = naturezaFiltro.value;
-    const pesquisa = pesquisaInput.value.toLowerCase();
-
-    const filtradas = ocorrencias.filter(o => {
-      const texto = `${o.Concelho} ${o.Freguesia} ${o.Localidade} ${o.EstadoAgrupado} ${o.Natureza}`.toLowerCase();
-      return (!concelho || o.Concelho === concelho) &&
-             (!freguesia || o.Freguesia === freguesia) &&
-             (!estado || o.EstadoAgrupado === estado) &&
-             (!natureza || o.Natureza === natureza) &&
-             (!pesquisa || texto.includes(pesquisa));
-    });
-
-    // --- Atualizar tabela
-    tabela.innerHTML = '';
-    filtradas.forEach(o => {
-      const linha = document.createElement('tr');
-      const estadoTexto = (o.EstadoAgrupado || '').toLowerCase();
-      if (estadoTexto.includes('conclusão')) linha.classList.add('estado-conclusao');
-      else if (estadoTexto.includes('curso')) linha.classList.add('estado-curso');
-      else if (estadoTexto.includes('despacho')) linha.classList.add('estado-despacho');
-      else if (estadoTexto.includes('resolução')) linha.classList.add('estado-resolucao');
-
-      linha.innerHTML = `
-        <td>${formatarDataHora(o.DataInicioOcorrencia)}</td>
-        <td>${o.Concelho || '—'}</td>
-        <td>${o.Freguesia || '—'}</td>
-        <td>${o.Localidade || '—'}</td>
-        <td>${o.Natureza || '—'}</td>
-        <td>${o.EstadoAgrupado || '—'}</td>
-        <td>${o.Operacionais || 0}</td>
-        <td>${o.NumeroMeiosTerrestresEnvolvidos || 0}</td>
-        <td>${o.NumeroMeiosAereosEnvolvidos || 0}</td>
-        <td>${o.NumeroMeiosAquaticos || 0}</td>
-      `;
-      tabela.appendChild(linha);
-    });
-
-    atualizarCards(filtradas);
-  }
-
-  function criarCard(titulo, valor, corFundo, corTexto = '#000') {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.backgroundColor = corFundo;
-    card.style.color = corTexto;
-    card.innerHTML = `<h3>${titulo}</h3><p>${valor}</p>`;
-    document.getElementById('cardsContainer').appendChild(card);
-  }
-
-  function atualizarCards(ocorrencias) {
-    const container = document.getElementById('cardsContainer');
-    container.innerHTML = '';
-
-    const totalOcorrencias = ocorrencias.length;
-    const totalOperacionais = ocorrencias.reduce((s, o) => s + (o.Operacionais || 0), 0);
-    const totalVeiculos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosTerrestresEnvolvidos || 0), 0);
-    const totalAereos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAereosEnvolvidos || 0), 0);
-    const totalAquaticos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAquaticos || 0), 0);
-
-    criarCard('📌 Ocorrências', totalOcorrencias, '#4a90e2', '#fff');
-    criarCard('👨‍🚒 Operacionais', totalOperacionais, '#d4f4d7', '#000');
-    criarCard('🚒 Veículos', totalVeiculos, '#f8d4d4', '#000');
-    criarCard('🚁 Aéreos', totalAereos, '#ffe5b4', '#000');
-    criarCard('🚤 Aquáticos', totalAquaticos, '#d4e4f8', '#000');
-
-    // --- Ocorrências críticas
-    const criticas = ocorrencias.filter(o => {
-      const estadoOk = o.EstadoAgrupado === "Em Curso" || o.EstadoAgrupado === "Em Conclusão";
-
-      let duracaoOk = false;
-      if (o.DataInicioOcorrencia) {
-        const inicio = new Date(o.DataInicioOcorrencia);
-        const fim = new Date(o.DataDosDados || Date.now());
-        const diffMin = (fim - inicio) / 60000; // minutos
-        duracaoOk = diffMin >= 180;
-      }
-
-      const operacionaisOk = (o.Operacionais || 0) >= 100;
-      return estadoOk && duracaoOk && operacionaisOk;
-    });
-
-    if (criticas.length > 0) {
-      const criticasDiv = document.createElement('div');
-      criticasDiv.className = 'card critico';
-      criticasDiv.innerHTML = `<h3>🔥 Ocorrências Críticas (${criticas.length})</h3>`;
-      
-      criticas.forEach(o => {
-        criticasDiv.innerHTML += `
-          <div class="ocorrencia-critica">
-            <strong>${o.Concelho || '—'} - ${o.Freguesia || o.Localidade || '—'}</strong><br>
-            👨‍🚒 ${o.Operacionais || 0} | 🚒 ${o.NumeroMeiosTerrestresEnvolvidos || 0} | 🚁 ${o.NumeroMeiosAereosEnvolvidos || 0} | 🚤 ${o.NumeroMeiosAquaticos || 0}
-          </div>
-        `;
-      });
-
-      container.appendChild(criticasDiv);
+    function capitalizar(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
-  }
 
-  concelhoFiltro.addEventListener('change', atualizarTabelaEcards);
-  freguesiaFiltro.addEventListener('change', atualizarTabelaEcards);
-  estadoFiltro.addEventListener('change', atualizarTabelaEcards);
-  naturezaFiltro.addEventListener('change', atualizarTabelaEcards);
-  pesquisaInput.addEventListener('input', atualizarTabelaEcards);
-  document.getElementById('limparFiltros').addEventListener('click', () => {
-    concelhoFiltro.value = '';
-    freguesiaFiltro.value = '';
-    estadoFiltro.value = '';
-    naturezaFiltro.value = '';
-    pesquisaInput.value = '';
-    atualizarTabelaEcards();
-  });
-</script>
+    function formatarData(dataStr) {
+      if (!dataStr) return '—';
+      const d = new Date(dataStr);
+      return d.toLocaleString('pt-PT');
+    }
+
+    function criarOpcoes(array, select) {
+      const valores = [...new Set(array.filter(Boolean))].sort();
+      select.innerHTML = `<option value="">${capitalizar(select.id.replace('Filtro',''))}</option>`;
+      valores.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = capitalizar(v);
+        select.appendChild(opt);
+      });
+    }
+
+    function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff', icone='') {
+      const container = document.getElementById('cardsContainer');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.backgroundColor = cor;
+      card.style.color = textoCor;
+      card.innerHTML = `
+        <div style="font-size:1.2em;">${icone} ${titulo}</div>
+        <div style="font-size:1.5em; margin-top:5px;">${valor}</div>
+      `;
+      container.appendChild(card);
+    }
+
+    function atualizarCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
+
+      const totalOcorrencias = ocorrencias.length;
+      const totalOperacionais = ocorrencias.reduce((s, o) => s + (o.Operacionais || 0), 0);
+      const totalVeiculos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosTerrestresEnvolvidos || 0), 0);
+      const totalAereos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAereosEnvolvidos || 0), 0);
+      const totalAquaticos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAquaticos || 0), 0);
+
+      criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff', '📌');
+      criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000', '👨‍🚒');
+      criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000', '🚒');
+      criarCard('Aéreos', totalAereos, '#ffe5b4', '#000', '🚁');
+      criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000', '🚤');
+
+      // 🔥 Ocorrências Críticas
+      const criticas = ocorrencias.filter(o => {
+        const estadoOk = o.EstadoAgrupado === "Em Curso" || o.EstadoAgrupado === "Em Conclusão";
+
+        let duracaoOk = false;
+        if (o.DataInicioOcorrencia) {
+          const inicio = new Date(o.DataInicioOcorrencia);
+          const fim = new Date(o.DataDosDados || Date.now());
+          const diffMin = (fim - inicio) / 60000; // minutos
+          duracaoOk = diffMin >= 180;
+        }
+
+        const operacionaisOk = (o.Operacionais || 0) >= 100;
+        return estadoOk && duracaoOk && operacionaisOk;
+      });
+
+      if (criticas.length > 0) {
+        const criticasDiv = document.createElement('div');
+        criticasDiv.className = 'card';
+        criticasDiv.style.backgroundColor = '#ff4d4d';
+        criticasDiv.style.color = '#fff';
+        criticasDiv.style.flex = '1 1 100%';
+        criticasDiv.innerHTML = `<h3>🔥 Ocorrências Críticas (${criticas.length})</h3>`;
+        
+        criticas.forEach(o => {
+          criticasDiv.innerHTML += `
+            <div class="ocorrencia-critica">
+              <strong>${o.Concelho || '—'} - ${o.Freguesia || o.Localidade || '—'}</strong><br>
+              🌱 ${o.Natureza || '—'} | 📌 ${o.EstadoAgrupado || '—'}<br>
+              👨‍🚒 ${o.Operacionais || 0} | 🚒 ${o.NumeroMeiosTerrestresEnvolvidos || 0} | 🚁 ${o.NumeroMeiosAereosEnvolvidos || 0} | 🚤 ${o.NumeroMeiosAquaticos || 0}
+            </div>
+          `;
+        });
+
+        container.appendChild(criticasDiv);
+      }
+    }
+
+    function atualizarTabela() {
+      const tabela = document.querySelector('#tabelaOcorrencias tbody');
+      tabela.innerHTML = '';
+
+      const concelhoFiltro = document.getElementById('concelhoFiltro').value;
+      const freguesiaFiltro = document.getElementById('freguesiaFiltro').value;
+      const naturezaFiltro = document.getElementById('naturezaFiltro').value;
+      const estadoFiltro = document.getElementById('estadoFiltro').value;
+
+      const filtradas = ocorrencias.filter(o => {
+        return (!concelhoFiltro || o.Concelho === concelhoFiltro) &&
+               (!freguesiaFiltro || o.Freguesia === freguesiaFiltro) &&
+               (!naturezaFiltro || o.Natureza === naturezaFiltro) &&
+               (!estadoFiltro || o.EstadoAgrupado === estadoFiltro);
+      });
+
+      filtradas.forEach(o => {
+        const linha = document.createElement('tr');
+        linha.innerHTML = `
+          <td>${formatarData(o.DataInicioOcorrencia)}</td>
+          <td>${o.Concelho || '—'}</td>
+          <td>${o.Freguesia || '—'}</td>
+          <td>${o.Localidade || '—'}</td>
+          <td>${o.Natureza || '—'}</td>
+          <td>${o.EstadoAgrupado || '—'}</td>
+          <td>${o.Operacionais || 0}</td>
+          <td>${o.NumeroMeiosTerrestresEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAereosEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAquaticos || 0}</td>
+        `;
+
+        const id = o.ID_oc;
+        const hash = JSON.stringify(o);
+        if (!tabelaAnterior[id] || tabelaAnterior[id] !== hash) {
+          linha.classList.add('piscar-celula');
+        }
+        tabelaAnterior[id] = hash;
+
+        tabela.appendChild(linha);
+      });
+    }
+
+    async function carregarDados() {
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        ocorrencias = data.features.map(f => f.properties);
+
+        criarOpcoes(ocorrencias.map(o => o.Concelho), document.getElementById('concelhoFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Freguesia), document.getElementById('freguesiaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Natureza), document.getElementById('naturezaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.EstadoAgrupado), document.getElementById('estadoFiltro'));
+
+        atualizarCards();
+        atualizarTabela();
+      } catch (e) {
+        console.error("Erro ao carregar dados", e);
+      }
+    }
+
+    document.querySelectorAll('#filtros select').forEach(sel => sel.addEventListener('change', atualizarTabela));
+
+    carregarDados();
+    setInterval(carregarDados, 60000); // atualiza a cada 1 min
+  </script>
 </body>
 </html>
