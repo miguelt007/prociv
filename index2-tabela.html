@@ -63,6 +63,7 @@
       margin-bottom: 8px;
       padding: 6px;
       border-bottom: 1px solid rgba(255,255,255,0.3);
+      text-align: left;
     }
   </style>
 </head>
@@ -102,7 +103,7 @@
     let tabelaAnterior = {};
 
     function capitalizar(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
     }
 
     function formatarData(dataStr) {
@@ -176,10 +177,21 @@
         criticasDiv.innerHTML = `<h3>🔥 Ocorrências Críticas (${criticas.length})</h3>`;
         
         criticas.forEach(o => {
+          let duracaoTexto = '—';
+          if (o.DataInicioOcorrencia) {
+            const inicio = new Date(o.DataInicioOcorrencia);
+            const fim = new Date(o.DataDosDados || Date.now());
+            const diffMs = fim - inicio;
+            const horas = Math.floor(diffMs / 3600000);
+            const minutos = Math.floor((diffMs % 3600000) / 60000);
+            duracaoTexto = `${horas}h ${minutos}m`;
+          }
+
           criticasDiv.innerHTML += `
             <div class="ocorrencia-critica">
               <strong>${o.Concelho || '—'} - ${o.Freguesia || o.Localidade || '—'}</strong><br>
               🌱 ${o.Natureza || '—'} | 📌 ${o.EstadoAgrupado || '—'}<br>
+              📅 ${formatarData(o.DataInicioOcorrencia)} | ⏳ ${duracaoTexto}<br>
               👨‍🚒 ${o.Operacionais || 0} | 🚒 ${o.NumeroMeiosTerrestresEnvolvidos || 0} | 🚁 ${o.NumeroMeiosAereosEnvolvidos || 0} | 🚤 ${o.NumeroMeiosAquaticos || 0}
             </div>
           `;
