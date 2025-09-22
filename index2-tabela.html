@@ -65,13 +65,23 @@
     body.dark-mode td {
       border-color: #444;
     }
+    tr.estado-conclusao { background-color: #d4f4d7; color: #000; }
+    tr.estado-curso     { background-color: #f8d4d4; color: #000; }
+    tr.estado-despacho  { background-color: #ffe5b4; color: #000; }
+    tr.estado-resolucao { background-color: #d4e4f8; color: #000; }
+    body.dark-mode tr.estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-curso     { background-color: #5a2e2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-despacho  { background-color: #5a4a2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
+
     tr.piscar-celula {
       animation: piscar 1s ease-in-out 2;
     }
     @keyframes piscar {
       0% { background-color: yellow; }
-      100% { background-color: white; }
+      100% { background-color: inherit; }
     }
+
     .cards {
       display: flex;
       gap: 10px;
@@ -135,7 +145,6 @@
     let ocorrencias = [];
     let tabelaAnterior = {};
 
-    // Ativar modo noturno salvo
     const modoSalvo = localStorage.getItem('modo');
     if(modoSalvo === 'dark') document.body.classList.add('dark-mode');
 
@@ -202,7 +211,7 @@
         if (o.DataInicioOcorrencia) {
           const inicio = new Date(o.DataInicioOcorrencia);
           const fim = new Date(o.DataDosDados || Date.now());
-          const diffMin = (fim - inicio) / 60000; // minutos
+          const diffMin = (fim - inicio) / 60000;
           duracaoOk = diffMin >= 180;
         }
 
@@ -261,6 +270,15 @@
 
       filtradas.forEach(o => {
         const linha = document.createElement('tr');
+
+        const estadoTexto = o.EstadoAgrupado ? o.EstadoAgrupado.toLowerCase() : '';
+        let classeEstado = '';
+        if (estadoTexto.includes('conclusão')) classeEstado = 'estado-conclusao';
+        else if (estadoTexto.includes('curso')) classeEstado = 'estado-curso';
+        else if (estadoTexto.includes('despacho')) classeEstado = 'estado-despacho';
+        else if (estadoTexto.includes('resolução')) classeEstado = 'estado-resolucao';
+        if (classeEstado) linha.classList.add(classeEstado);
+
         linha.innerHTML = `
           <td>${formatarData(o.DataInicioOcorrencia)}</td>
           <td>${o.Concelho || '—'}</td>
@@ -306,7 +324,7 @@
     document.querySelectorAll('#filtros select').forEach(sel => sel.addEventListener('change', atualizarTabela));
 
     carregarDados();
-    setInterval(carregarDados, 60000); // atualiza a cada 1 min
+    setInterval(carregarDados, 60000);
   </script>
 </body>
 </html>
