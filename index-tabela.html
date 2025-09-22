@@ -1,303 +1,330 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-<meta charset="UTF-8">
-<title>Ocorrências Ativas</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>
-  body { font-family: Arial, sans-serif; padding: 20px; background-color: #fff; color: #000; transition: 0.3s; }
-  .dark-mode { background-color: #121212; color: #e0e0e0; }
-  .dark-mode table { background-color: #1e1e1e; color: #e0e0e0; }
-  .dark-mode th { background-color: #2c2c2c; }
-  .dark-mode td { border-color: #444; color: #e0e0e0; }
-  .dark-mode select, .dark-mode input, .dark-mode button { background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #555; }
-  #modoToggle { margin-bottom: 20px; padding: 6px 12px; cursor: pointer; }
-  #filtros { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-  select, input, button { padding: 6px; font-size: 14px; }
-  button { cursor: pointer; }
-  .table-wrapper { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; min-width: 800px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  th { background-color: #f2f2f2; }
-  .estado-conclusao { background-color: #d4f4d7; }
-  .estado-curso { background-color: #f20303; color: #e0e0e0; }
-  .estado-despacho { background-color: #ffe5b4; }
-  .estado-resolucao { background-color: #d4e4f8; }
-  .dark-mode .estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
-  .dark-mode .estado-curso { background-color: #5a2e2e; color: #e0e0e0; }
-  .dark-mode .estado-despacho { background-color: #5a4a2e; color: #e0e0e0; }
-  .dark-mode .estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
+  <meta charset="UTF-8">
+  <title>Tabela Ocorrências</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+      color: #000;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    h1 {
+      text-align: center;
+    }
+    #modoToggle {
+      margin-bottom: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    #filtros {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    select {
+      padding: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #000;
+    }
+    body.dark-mode select {
+      background: #2c2c2c;
+      color: #e0e0e0;
+      border: 1px solid #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    body.dark-mode table {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    body.dark-mode th {
+      background-color: #2c2c2c;
+    }
+    body.dark-mode td {
+      border-color: #444;
+    }
+    tr.estado-conclusao { background-color: #d4f4d7; color: #000; }
+    tr.estado-curso     { background-color: #f8d4d4; color: #000; }
+    tr.estado-despacho  { background-color: #ffe5b4; color: #000; }
+    tr.estado-resolucao { background-color: #d4e4f8; color: #000; }
+    body.dark-mode tr.estado-conclusao { background-color: #2e4f2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-curso     { background-color: #5a2e2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-despacho  { background-color: #5a4a2e; color: #e0e0e0; }
+    body.dark-mode tr.estado-resolucao { background-color: #2e3e5a; color: #e0e0e0; }
 
-  /* Cards de estatísticas */
-  #estatisticas { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-  .card {
-    flex: 1 1 150px;
-    padding: 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    transition: transform 0.3s, background-color 0.3s;
-    position: relative;
-  }
+    tr.piscar-celula {
+      animation: piscar 1s ease-in-out 2;
+    }
+    @keyframes piscar {
+      0% { background-color: yellow; }
+      100% { background-color: inherit; }
+    }
 
-  /* Animação de piscada célula a célula */
-  @keyframes piscar-celula {
-    0%, 100% { background-color: inherit; }
-    50% { background-color: yellow; }
-  }
-  .piscar-celula { animation: piscar-celula 1s ease-in-out 3; }
-
-  .atualizado {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: #4a90e2;
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-weight: bold;
-    display: none;
-  }
-</style>
+    .cards {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .card {
+      padding: 10px;
+      border-radius: 10px;
+      min-width: 120px;
+      text-align: center;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+      flex: 0 0 auto;
+    }
+    .card h3 {
+      margin: 0 0 5px;
+      font-size: 1em;
+    }
+    .ocorrencia-critica {
+      margin-bottom: 6px;
+      padding: 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      text-align: left;
+    }
+  </style>
 </head>
 <body>
+  <button id="modoToggle">🌙 Alternar Modo</button>
+  <h1>Ocorrências PROCIV</h1>
 
-<div class="atualizado" id="msgAtualizado">✅ Dados Atualizados</div>
+  <div id="filtros">
+    <select id="concelhoFiltro"></select>
+    <select id="freguesiaFiltro"></select>
+    <select id="naturezaFiltro"></select>
+    <select id="estadoFiltro"></select>
+  </div>
 
-<button id="modoToggle">🌙 Alternar Modo</button>
-<h1>Ocorrências Ativas em Portugal</h1>
+  <div id="cardsContainer" class="cards"></div>
 
-<div id="filtros">
-  <select id="concelhoFiltro"><option value="">Concelho</option></select>
-  <select id="freguesiaFiltro"><option value="">Freguesia</option></select>
-  <select id="estadoFiltro"><option value="">Estado</option></select>
-  <select id="naturezaFiltro"><option value="">Natureza</option></select>
-  <input type="text" id="pesquisa" placeholder="Pesquisar..." />
-  <button id="limparFiltros">Limpar Filtros</button>
-</div>
-
-<div id="estatisticas"></div>
-
-<div class="table-wrapper">
-  <table id="ocorrencias">
+  <table id="tabelaOcorrencias">
     <thead>
       <tr>
         <th>Data/Hora</th>
         <th>Concelho</th>
         <th>Freguesia</th>
-        <th>Localização</th>
+        <th>Localidade</th>
         <th>Natureza</th>
         <th>Estado</th>
-        <th>OP</th>
-        <th>MT</th>
-        <th>MA</th>
-        <th>MAq</th>
+        <th>Operacionais</th>
+        <th>Terrestres</th>
+        <th>Aéreos</th>
+        <th>Aquáticos</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
-</div>
 
-<script>
-const tabela = document.querySelector('#ocorrencias tbody');
-const concelhoFiltro = document.getElementById('concelhoFiltro');
-const freguesiaFiltro = document.getElementById('freguesiaFiltro');
-const estadoFiltro = document.getElementById('estadoFiltro');
-const naturezaFiltro = document.getElementById('naturezaFiltro');
-const pesquisaInput = document.getElementById('pesquisa');
-const modoToggle = document.getElementById('modoToggle');
-const msgAtualizado = document.getElementById('msgAtualizado');
+  <script>
+    const url = "https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*";
+    let ocorrencias = [];
+    let tabelaAnterior = {};
 
-if (localStorage.getItem('modo') === 'dark') document.body.classList.add('dark-mode');
-modoToggle.addEventListener('click', () => {
-  document.body.classList.toggle('dark-mode');
-  localStorage.setItem('modo', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-});
+    const modoSalvo = localStorage.getItem('modo');
+    if(modoSalvo === 'dark') document.body.classList.add('dark-mode');
 
-function formatarData(d) {
-  if (!d) return '—';
-  const data = typeof d === 'number' ? new Date(d) : new Date(d);
-  if (isNaN(data)) return '—';
-  return data.toLocaleString('pt-PT');
-}
+    document.getElementById('modoToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const modoAtual = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+      localStorage.setItem('modo', modoAtual);
+    });
 
-function capitalizar(texto) {
-  if (!texto) return '';
-  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-}
-
-let todasOcorrencias = [];
-let tabelaAnterior = {}; // armazena hash das linhas anteriores
-const apiURL = 'https://prociv-agserver.geomai.mai.gov.pt/arcgis/rest/services/Ocorrencias_Base/FeatureServer/0/query?f=geojson&where=1=1&outFields=*';
-const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(apiURL);
-
-function carregarDados() {
-  fetch(proxy)
-    .then(res => res.json())
-    .then(data => {
-      todasOcorrencias = data.features.map(f => {
-        const p = f.properties;
-        return {
-          ID_oc: p.OBJECTID,
-          DataHora: p.DataInicioOcorrencia,
-          Concelho: p.Concelho || '—',
-          Freguesia: p.Freguesia || '—',
-          Localizacao: p.Localidade || '—',
-          Natureza: p.Natureza || '—',
-          Estado: p.EstadoAgrupado || p.EstadoOcorrencia || '—',
-          Operacionais: p.Operacionais || 0,
-          Veiculos: p.NumeroMeiosTerrestresEnvolvidos || 0,
-          Aereos: p.NumeroMeiosAereosEnvolvidos || 0,
-          Aquaticos: p.NumeroMeiosAquaticos || 0
-        };
-      });
-      preencherFiltros();
-      atualizarTabela();
-      mostrarAtualizado();
-    })
-    .catch(err => console.error("Erro ao carregar dados:", err));
-}
-
-function criarOpcoes(array, select) {
-  const valores = [...new Set(array.filter(Boolean))].sort();
-  select.innerHTML = `<option value="">${capitalizar(select.id.replace('Filtro',''))}</option>`;
-  valores.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v;
-    opt.textContent = capitalizar(v);
-    select.appendChild(opt);
-  });
-}
-
-function preencherFiltros() {
-  criarOpcoes(todasOcorrencias.map(o => o.Concelho), concelhoFiltro);
-  criarOpcoes(todasOcorrencias.map(o => o.Estado), estadoFiltro);
-  criarOpcoes(todasOcorrencias.map(o => o.Natureza), naturezaFiltro);
-  atualizarFreguesias();
-}
-
-function atualizarFreguesias() {
-  const conc = concelhoFiltro.value;
-  let freguesias = todasOcorrencias
-    .filter(o => !conc || o.Concelho === conc)
-    .map(o => o.Freguesia);
-  freguesias = [...new Set(freguesias)].sort();
-  freguesiaFiltro.innerHTML = `<option value="">Freguesia</option>`;
-  freguesias.forEach(f => {
-    const opt = document.createElement('option');
-    opt.value = f;
-    opt.textContent = capitalizar(f);
-    freguesiaFiltro.appendChild(opt);
-  });
-}
-
-function atualizarTabela() {
-  const concelho = concelhoFiltro.value;
-  const freguesia = freguesiaFiltro.value;
-  const estado = estadoFiltro.value;
-  const natureza = naturezaFiltro.value;
-  const pesquisa = pesquisaInput.value.toLowerCase();
-
-  const filtradas = todasOcorrencias.filter(o => {
-    const texto = `${o.Concelho} ${o.Freguesia} ${o.Localizacao} ${o.Estado} ${o.Natureza}`.toLowerCase();
-    return (!concelho || o.Concelho === concelho) &&
-           (!freguesia || o.Freguesia === freguesia) &&
-           (!estado || o.Estado === estado) &&
-           (!natureza || o.Natureza === natureza) &&
-           (!pesquisa || texto.includes(pesquisa));
-  });
-
-  tabela.innerHTML = '';
-  filtradas.forEach(o => {
-    const linha = document.createElement('tr');
-    const estadoTexto = o.Estado ? o.Estado.toLowerCase() : '';
-    let classeEstado = '';
-    if (estadoTexto.includes('conclusão')) classeEstado = 'estado-conclusao';
-    else if (estadoTexto.includes('curso')) classeEstado = 'estado-curso';
-    else if (estadoTexto.includes('despacho')) classeEstado = 'estado-despacho';
-    else if (estadoTexto.includes('resolução')) classeEstado = 'estado-resolucao';
-    if (classeEstado) linha.classList.add(classeEstado);
-
-    linha.innerHTML = `
-      <td>${formatarData(o.DataHora)}</td>
-      <td>${o.Concelho}</td>
-      <td>${o.Freguesia}</td>
-      <td>${o.Localizacao}</td>
-      <td>${o.Natureza}</td>
-      <td>${o.Estado}</td>
-      <td>${o.Operacionais}</td>
-      <td>${o.Veiculos}</td>
-      <td>${o.Aereos}</td>
-      <td>${o.Aquaticos}</td>
-    `;
-
-    const hash = JSON.stringify(o);
-    if (!tabelaAnterior[o.ID_oc] || tabelaAnterior[o.ID_oc] !== hash) {
-      linha.classList.add('piscar-celula');
+    function capitalizar(str) {
+      return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
     }
-    tabelaAnterior[o.ID_oc] = hash;
 
-    tabela.appendChild(linha);
-  });
+    function formatarData(dataStr) {
+      if (!dataStr) return '—';
+      const d = new Date(dataStr);
+      return d.toLocaleString('pt-PT');
+    }
 
-  atualizarCards(filtradas);
-}
+    function criarOpcoes(array, select) {
+      const valores = [...new Set(array.filter(Boolean))].sort();
+      select.innerHTML = `<option value="">${capitalizar(select.id.replace('Filtro',''))}</option>`;
+      valores.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = capitalizar(v);
+        select.appendChild(opt);
+      });
+    }
 
-function atualizarCards(filtradas) {
-  const totalOcorrencias = filtradas.length;
-  const totalOperacionais = filtradas.reduce((s,o)=>s+o.Operacionais,0);
-  const totalVeiculos = filtradas.reduce((s,o)=>s+o.Veiculos,0);
-  const totalAereos = filtradas.reduce((s,o)=>s+o.Aereos,0);
-  const totalAquaticos = filtradas.reduce((s,o)=>s+o.Aquaticos,0);
+    function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff', icone='') {
+      const container = document.getElementById('cardsContainer');
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.backgroundColor = cor;
+      card.style.color = textoCor;
+      card.innerHTML = `
+        <div style="font-size:1.1em;">${icone} ${titulo}</div>
+        <div style="font-size:1.4em; margin-top:5px;">${valor}</div>
+      `;
+      container.appendChild(card);
+    }
 
-  const container = document.getElementById('estatisticas');
-  container.innerHTML = '';
+    function atualizarCards() {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = '';
 
-  function criarCard(titulo, valor, cor='#4a90e2', textoCor='#fff', icone='') {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.backgroundColor = cor;
-    card.style.color = textoCor;
-    card.innerHTML = `
-      <div style="font-size:1.2em;">${icone} ${titulo}</div>
-      <div style="font-size:1.5em; margin-top:5px;">${valor}</div>
-    `;
-    container.appendChild(card);
-  }
+      const totalOcorrencias = ocorrencias.length;
+      const totalOperacionais = ocorrencias.reduce((s, o) => s + (o.Operacionais || 0), 0);
+      const totalVeiculos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosTerrestresEnvolvidos || 0), 0);
+      const totalAereos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAereosEnvolvidos || 0), 0);
+      const totalAquaticos = ocorrencias.reduce((s, o) => s + (o.NumeroMeiosAquaticos || 0), 0);
 
-  criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff', '📌');
-  criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000', '👨‍🚒');
-  criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000', '🚒');
-  criarCard('Aéreos', totalAereos, '#ffe5b4', '#000', '🚁');
-  criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000', '🚤');
-}
+      criarCard('Ocorrências', totalOcorrencias, '#4a90e2', '#fff', '📌');
+      criarCard('Operacionais', totalOperacionais, '#d4f4d7', '#000', '👨‍🚒');
+      criarCard('Veículos', totalVeiculos, '#f8d4d4', '#000', '🚒');
+      criarCard('Aéreos', totalAereos, '#ffe5b4', '#000', '🚁');
+      criarCard('Aquáticos', totalAquaticos, '#d4e4f8', '#000', '🚤');
 
-function mostrarAtualizado() {
-  msgAtualizado.style.display = 'block';
-  setTimeout(() => { msgAtualizado.style.display = 'none'; }, 2000);
-}
+      const criticas = ocorrencias.filter(o => {
+        const estadoOk = o.EstadoAgrupado === "Em Curso" || o.EstadoAgrupado === "Em Conclusão";
 
-concelhoFiltro.addEventListener('change', () => { atualizarFreguesias(); atualizarTabela(); });
-freguesiaFiltro.addEventListener('change', atualizarTabela);
-estadoFiltro.addEventListener('change', atualizarTabela);
-naturezaFiltro.addEventListener('change', atualizarTabela);
-pesquisaInput.addEventListener('input', atualizarTabela);
+        let duracaoOk = false;
+        if (o.DataInicioOcorrencia) {
+          const inicio = new Date(o.DataInicioOcorrencia);
+          const fim = new Date(o.DataDosDados || Date.now());
+          const diffMin = (fim - inicio) / 60000;
+          duracaoOk = diffMin >= 180;
+        }
 
-document.getElementById('limparFiltros').addEventListener('click', () => {
-  concelhoFiltro.value = '';
-  freguesiaFiltro.value = '';
-  estadoFiltro.value = '';
-  naturezaFiltro.value = '';
-  pesquisaInput.value = '';
-  atualizarTabela();
-});
+        const operacionaisOk = (o.Operacionais || 0) >= 100;
+        return estadoOk && duracaoOk && operacionaisOk;
+      });
 
-// Atualização automática a cada 60 segundos
-setInterval(() => { carregarDados(); }, 180000);
+      if (criticas.length > 0) {
+        const criticasDiv = document.createElement('div');
+        criticasDiv.className = 'card';
+        criticasDiv.style.backgroundColor = '#ff4d4d';
+        criticasDiv.style.color = '#fff';
+        criticasDiv.style.flex = '1 1 100%';
+        criticasDiv.innerHTML = `<h3>🔥 Ocorrências Críticas (${criticas.length})</h3>`;
+        
+        criticas.forEach(o => {
+          let duracaoTexto = '—';
+          if (o.DataInicioOcorrencia) {
+            const inicio = new Date(o.DataInicioOcorrencia);
+            const fim = new Date(o.DataDosDados || Date.now());
+            const diffMs = fim - inicio;
+            const horas = Math.floor(diffMs / 3600000);
+            const minutos = Math.floor((diffMs % 3600000) / 60000);
+            duracaoTexto = `${horas}h ${minutos}m`;
+          }
 
-// Carregar dados inicialmente
-carregarDados();
-</script>
+          criticasDiv.innerHTML += `
+            <div class="ocorrencia-critica">
+              <strong>${o.Concelho || '—'} - ${o.Freguesia || o.Localidade || '—'}</strong><br>
+              🌱 ${o.Natureza || '—'} | 📌 ${o.EstadoAgrupado || '—'}<br>
+              📅 ${formatarData(o.DataInicioOcorrencia)} | ⏳ ${duracaoTexto}<br>
+              👨‍🚒 ${o.Operacionais || 0} | 🚒 ${o.NumeroMeiosTerrestresEnvolvidos || 0} | 🚁 ${o.NumeroMeiosAereosEnvolvidos || 0} | 🚤 ${o.NumeroMeiosAquaticos || 0}
+            </div>
+          `;
+        });
+
+        container.appendChild(criticasDiv);
+      }
+    }
+
+    function atualizarTabela() {
+      const tabela = document.querySelector('#tabelaOcorrencias tbody');
+      tabela.innerHTML = '';
+
+      const concelhoFiltro = document.getElementById('concelhoFiltro').value;
+      const freguesiaFiltro = document.getElementById('freguesiaFiltro').value;
+      const naturezaFiltro = document.getElementById('naturezaFiltro').value;
+      const estadoFiltro = document.getElementById('estadoFiltro').value;
+
+      const filtradas = ocorrencias.filter(o => {
+        return (!concelhoFiltro || o.Concelho === concelhoFiltro) &&
+               (!freguesiaFiltro || o.Freguesia === freguesiaFiltro) &&
+               (!naturezaFiltro || o.Natureza === naturezaFiltro) &&
+               (!estadoFiltro || o.EstadoAgrupado === estadoFiltro);
+      });
+
+      filtradas.forEach(o => {
+        const linha = document.createElement('tr');
+
+        const estadoTexto = o.EstadoAgrupado ? o.EstadoAgrupado.toLowerCase() : '';
+        let classeEstado = '';
+        if (estadoTexto.includes('conclusão')) classeEstado = 'estado-conclusao';
+        else if (estadoTexto.includes('curso')) classeEstado = 'estado-curso';
+        else if (estadoTexto.includes('despacho')) classeEstado = 'estado-despacho';
+        else if (estadoTexto.includes('resolução')) classeEstado = 'estado-resolucao';
+        if (classeEstado) linha.classList.add(classeEstado);
+
+        linha.innerHTML = `
+          <td>${formatarData(o.DataInicioOcorrencia)}</td>
+          <td>${o.Concelho || '—'}</td>
+          <td>${o.Freguesia || '—'}</td>
+          <td>${o.Localidade || '—'}</td>
+          <td>${o.Natureza || '—'}</td>
+          <td>${o.EstadoAgrupado || '—'}</td>
+          <td>${o.Operacionais || 0}</td>
+          <td>${o.NumeroMeiosTerrestresEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAereosEnvolvidos || 0}</td>
+          <td>${o.NumeroMeiosAquaticos || 0}</td>
+        `;
+
+        const id = o.ID_oc;
+        const hash = JSON.stringify(o);
+        if (!tabelaAnterior[id] || tabelaAnterior[id] !== hash) {
+          linha.classList.add('piscar-celula');
+        }
+        tabelaAnterior[id] = hash;
+
+        tabela.appendChild(linha);
+      });
+    }
+
+    async function carregarDados() {
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        ocorrencias = data.features.map(f => f.properties);
+
+        criarOpcoes(ocorrencias.map(o => o.Concelho), document.getElementById('concelhoFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Freguesia), document.getElementById('freguesiaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.Natureza), document.getElementById('naturezaFiltro'));
+        criarOpcoes(ocorrencias.map(o => o.EstadoAgrupado), document.getElementById('estadoFiltro'));
+
+        atualizarCards();
+        atualizarTabela();
+      } catch (e) {
+        console.error("Erro ao carregar dados", e);
+      }
+    }
+
+    document.querySelectorAll('#filtros select').forEach(sel => sel.addEventListener('change', atualizarTabela));
+
+    carregarDados();
+    setInterval(carregarDados, 60000);
+  </script>
 </body>
 </html>
