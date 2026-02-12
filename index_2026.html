@@ -232,6 +232,9 @@ footer {
             <label>Tipo Ocorrência: 
                 <select id="filterTipo"><option value="">Todos</option></select>
             </label>
+            <label>Estado: 
+                <select id="filterEstado"><option value="">Todos</option></select>
+            </label>
             <button id="applyFilters">Aplicar Filtros</button>
         </div>
 
@@ -289,74 +292,63 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 /* ===== ESTADO API ===== */
-function setStatusOnline() {
-    const dot = document.getElementById("statusDot");
-    dot.classList.remove("offline");
-    dot.classList.add("online");
-}
-function setStatusOffline() {
-    const dot = document.getElementById("statusDot");
-    dot.classList.remove("online");
-    dot.classList.add("offline");
-}
+function setStatusOnline() { document.getElementById("statusDot").className = "dot online"; }
+function setStatusOffline() { document.getElementById("statusDot").className = "dot offline"; }
 
 /* ===== FETCH DADOS ===== */
 let allFeatures = [];
 async function fetchGeoData() {
     const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson";
-
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error("Erro HTTP");
-
         const data = await res.json();
         allFeatures = data.features || [];
         setStatusOnline();
         populateFilters();
         applyFilters();
-    } catch (err) {
-        console.error(err);
-        setStatusOffline();
-    }
+    } catch (err) { console.error(err); setStatusOffline(); }
 }
 
 /* ===== POPULAR FILTROS ===== */
 function populateFilters() {
-    const regiaoSet = new Set(), concelhoSet = new Set(), freguesiaSet = new Set(), tipoSet = new Set();
+    const regiaoSet = new Set(), concelhoSet = new Set(), freguesiaSet = new Set(), tipoSet = new Set(), estadoSet = new Set();
     allFeatures.forEach(f => {
         const p = f.properties;
         if (p.Regiao) regiaoSet.add(p.Regiao);
         if (p.Concelho) concelhoSet.add(p.Concelho);
         if (p.Freguesia) freguesiaSet.add(p.Freguesia);
         if (p.Tipo) tipoSet.add(p.Tipo);
+        if (p.EstadoOcorrencia) estadoSet.add(p.EstadoOcorrencia);
     });
 
     const addOptions = (selectId, values) => {
         const sel = document.getElementById(selectId);
         sel.innerHTML = `<option value="">Todos</option>` + Array.from(values).map(v => `<option value="${v}">${v}</option>`).join('');
     };
-
     addOptions('filterRegiao', regiaoSet);
     addOptions('filterConcelho', concelhoSet);
     addOptions('filterFreguesia', freguesiaSet);
     addOptions('filterTipo', tipoSet);
+    addOptions('filterEstado', estadoSet);
 }
 
 /* ===== APLICAR FILTROS ===== */
 document.getElementById('applyFilters').addEventListener('click', applyFilters);
-
 function applyFilters() {
     const fRegiao = document.getElementById('filterRegiao').value;
     const fConcelho = document.getElementById('filterConcelho').value;
     const fFreguesia = document.getElementById('filterFreguesia').value;
     const fTipo = document.getElementById('filterTipo').value;
+    const fEstado = document.getElementById('filterEstado').value;
 
     const filtered = allFeatures.filter(f => {
         const p = f.properties;
         return (!fRegiao || p.Regiao === fRegiao) &&
                (!fConcelho || p.Concelho === fConcelho) &&
                (!fFreguesia || p.Freguesia === fFreguesia) &&
-               (!fTipo || p.Tipo === fTipo);
+               (!fTipo || p.Tipo === fTipo) &&
+               (!fEstado || p.EstadoOcorrencia === fEstado);
     });
 
     updateDashboard(filtered);
@@ -364,7 +356,7 @@ function applyFilters() {
 
 /* ===== ESTILOS PARA ESTADO ===== */
 function getEstadoStyle(estado) {
-    if (!estado) return {background:"#d1d5db", color:"#000"}; // padrão cinza
+    if (!estado) return {background:"#d1d5db", color:"#000"};
     const e = estado.toLowerCase();
     if (e === "em curso") return {background:"#ef4444", color:"#fff"};
     if (e === "despacho") return {background:"#f97316", color:"#000"};
@@ -376,21 +368,11 @@ function getEstadoStyle(estado) {
 
 /* ===== ATUALIZAR DASHBOARD ===== */
 function updateDashboard(features) {
-    let totalAereos = 0,
-        totalOperacionais = 0,
-        totalVeiculos = 0,
-        totalAquaticos = 0,
-        totalIncendios = 0,
-        totalSignificativas = 0;
-
+    let totalAereos = 0, totalOperacionais = 0, totalVeiculos = 0, totalAquaticos = 0, totalIncendios = 0, totalSignificativas = 0;
     const table = document.getElementById('tableBody');
     table.innerHTML = "";
 
-    map.eachLayer(layer => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-        }
-    });
+    map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
 
     features.forEach(f => {
         const p = f.properties;
@@ -401,26 +383,16 @@ function updateDashboard(features) {
         totalVeiculos += Number(p.MeiosTerrestres || 0);
         totalAquaticos += Number(p.MeiosAquaticos || 0);
 
-        // 🔥 Total Incêndios / Detritos / Equipamentos
         if (p.Especie) {
-            const especieLower = p.Especie.toString().toLowerCase();
-            if (
-                especieLower.includes("incêndio") ||
-                especieLower.includes("detritos confinados") ||
-                especieLower.includes("detritos não confinados") ||
-                especieLower.includes("equipamentos")
-            ) {
+            const especieLower = p.Especie.toLowerCase();
+            if (especieLower.includes("incêndio") || especieLower.includes("detritos confinados") ||
+                especieLower.includes("detritos não confinados") || especieLower.includes("equipamentos")) {
                 totalIncendios++;
             }
         }
 
-        if (p.Significativa === 1 || 
-            (p.Significativa && 
-             p.Significativa.toString().toLowerCase() === "sim")) {
-            totalSignificativas++;
-        }
+        if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
 
-        // Estado colorido
         const estadoStyle = getEstadoStyle(p.EstadoOcorrencia);
 
         table.innerHTML += `
@@ -431,9 +403,7 @@ function updateDashboard(features) {
                 <td>${p.Freguesia || "-"}</td>
                 <td>${p.Localidade || "-"}</td>
                 <td>${p.Tipo || "-"}</td>
-                <td style="background-color:${estadoStyle.background}; color:${estadoStyle.color};">
-                    ${p.EstadoOcorrencia || "-"}
-                </td>
+                <td style="background-color:${estadoStyle.background}; color:${estadoStyle.color};">${p.EstadoOcorrencia || "-"}</td>
                 <td>${p.Operacionais || 0}</td>
                 <td>${p.MeiosTerrestres || 0}</td>
                 <td>${p.MeiosAereos || 0}</td>
@@ -441,10 +411,9 @@ function updateDashboard(features) {
             </tr>
         `;
 
-        // Popup no mapa
         if (coords) {
             const marker = L.marker([coords[1], coords[0]]).addTo(map);
-            const popupContent = `
+            marker.bindPopup(`
                 <b>Data / Hora:</b> ${p.Data || '-'}<br>
                 <b>Região:</b> ${p.Regiao || '-'}<br>
                 <b>Concelho:</b> ${p.Concelho || '-'}<br>
@@ -456,8 +425,7 @@ function updateDashboard(features) {
                 <b>Meios Terrestres:</b> ${p.MeiosTerrestres || 0}<br>
                 <b>Meios Aéreos:</b> ${p.MeiosAereos || 0}<br>
                 <b>Meios Aquáticos:</b> ${p.MeiosAquaticos || 0}
-            `;
-            marker.bindPopup(popupContent);
+            `);
         }
     });
 
