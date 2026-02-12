@@ -183,6 +183,10 @@ footer {
                 <th>Localização</th>
                 <th>Natureza</th>
                 <th>Estado</th>
+                <th>Operacionais</th>
+                <th>Meios Terrestres</th>
+                <th>Meios Aéreos</th>
+                <th>Meios Aquáticos</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -206,7 +210,7 @@ function updateDateTime() {
     const date = now.toLocaleDateString('pt-PT');
     const time = now.toLocaleTimeString('pt-PT');
     document.getElementById('datetime').innerText =
-        `${date} ${time}`;
+        `${date} ${time} - Última atualização: ${time}`;
 }
 setInterval(updateDateTime, 1000);
 updateDateTime();
@@ -233,7 +237,7 @@ function setStatusOffline() {
 /* ===== FETCH DADOS ===== */
 async function fetchGeoData() {
 
-    // URL corrigida para retornar dados
+    // URL corrigida
     const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson";
 
     try {
@@ -279,6 +283,10 @@ async function fetchGeoData() {
                     <td>${p.Local || "-"}</td>
                     <td>${p.Tipo || "-"}</td>
                     <td>${p.Estado || "-"}</td>
+                    <td>${p.Operacionais || 0}</td>
+                    <td>${p.MeiosTerrestres || 0}</td>
+                    <td>${p.MeiosAereos || 0}</td>
+                    <td>${p.MeiosAquaticos || 0}</td>
                 </tr>
             `;
 
