@@ -265,7 +265,8 @@ footer {
 </div>
 
 <footer>
-    © 2026 Painel Oficial de Monitorização - Fonte de dados: ANEPCAPI (via proxy local)
+    © 2026 Painel Oficial de Monitorização<br>
+    Fonte de dados: ANEPCAPI (via proxy local).
 </footer>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -424,7 +425,21 @@ function updateDashboard(features) {
         `;
 
         if (coords) {
-            L.marker([coords[1], coords[0]]).addTo(map);
+            const marker = L.marker([coords[1], coords[0]]).addTo(map);
+            const popupContent = `
+                <b>Data / Hora:</b> ${p.Data || '-'}<br>
+                <b>Região:</b> ${p.Regiao || '-'}<br>
+                <b>Concelho:</b> ${p.Concelho || '-'}<br>
+                <b>Freguesia:</b> ${p.Freguesia || '-'}<br>
+                <b>Localização:</b> ${p.Localidade || '-'}<br>
+                <b>Natureza:</b> ${p.Tipo || '-'}<br>
+                <b>Estado:</b> ${p.EstadoOcorrencia || '-'}<br>
+                <b>Operacionais:</b> ${p.Operacionais || 0}<br>
+                <b>Meios Terrestres:</b> ${p.MeiosTerrestres || 0}<br>
+                <b>Meios Aéreos:</b> ${p.MeiosAereos || 0}<br>
+                <b>Meios Aquáticos:</b> ${p.MeiosAquaticos || 0}
+            `;
+            marker.bindPopup(popupContent);
         }
     });
 
