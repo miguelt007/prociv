@@ -134,41 +134,42 @@ footer { text-align: center; padding: 15px; background: #1e3a8a; color: white; f
 <div class="container">
 
     <!-- CARTÕES -->
-<div class="section-title">Indicadores Gerais</div>
-<div class="cards">
-    <div class="card">
-        <p>Total Ocorrências</p>
-        <h2 id="totalOcorrencias"><i class="fas fa-bullseye"></i> 0</h2>
-    </div>
-    <div class="card">
-        <p>Total Operacionais</p>
-        <h2 id="totalOperacionais"><i class="fas fa-hat-firefighter"></i> 0</h2>
-        <span class="badge terrestres"><i class="fas fa-truck"></i> Terrestres</span>
-    </div>
-    <div class="card">
-        <p>Total Veículos</p>
-        <h2 id="totalVeiculos"><i class="fas fa-truck"></i> 0</h2>
-        <span class="badge terrestres"><i class="fas fa-truck"></i></span>
-    </div>
-    <div class="card">
-        <p>Total Aéreos</p>
-        <h2 id="totalAereos"><i class="fas fa-helicopter"></i> 0</h2>
-        <span class="badge aereos"><i class="fas fa-helicopter"></i></span>
-    </div>
-    <div class="card">
-        <p>Total Aquáticos</p>
-        <h2 id="totalAquaticos"><i class="fas fa-water"></i> 0</h2>
-        <span class="badge aquaticos"><i class="fas fa-water"></i></span>
-    </div>
-    <div class="card">
-        <p>Total Incêndios / Detritos / Equipamentos</p>
-        <h2 id="totalIncendios"><i class="fas fa-fire"></i> 0</h2>
-        <span class="badge incendios"><i class="fas fa-fire"></i></span>
-    </div>
-    <div class="card">
-        <p>Significativas</p>
-        <h2 id="totalSignificativas"><i class="fas fa-exclamation-triangle"></i> 0</h2>
-        <span class="badge significativas"><i class="fas fa-exclamation-triangle"></i></span>
+    <div class="section-title">Indicadores Gerais</div>
+    <div class="cards">
+        <div class="card">
+            <p>Total Ocorrências</p>
+            <h2 id="totalOcorrencias"><i class="fas fa-bullseye"></i> 0</h2>
+        </div>
+        <div class="card">
+            <p>Total Operacionais</p>
+            <h2 id="totalOperacionais"><i class="fas fa-hat-firefighter"></i> 0</h2>
+            <span class="badge terrestres"><i class="fas fa-truck"></i> Terrestres</span>
+        </div>
+        <div class="card">
+            <p>Total Veículos</p>
+            <h2 id="totalVeiculos"><i class="fas fa-truck"></i> 0</h2>
+            <span class="badge terrestres"><i class="fas fa-truck"></i></span>
+        </div>
+        <div class="card">
+            <p>Total Aéreos</p>
+            <h2 id="totalAereos"><i class="fas fa-helicopter"></i> 0</h2>
+            <span class="badge aereos"><i class="fas fa-helicopter"></i></span>
+        </div>
+        <div class="card">
+            <p>Total Aquáticos</p>
+            <h2 id="totalAquaticos"><i class="fas fa-water"></i> 0</h2>
+            <span class="badge aquaticos"><i class="fas fa-water"></i></span>
+        </div>
+        <div class="card">
+            <p>Total Incêndios / Detritos / Equipamentos</p>
+            <h2 id="totalIncendios"><i class="fas fa-fire"></i> 0</h2>
+            <span class="badge incendios"><i class="fas fa-fire"></i></span>
+        </div>
+        <div class="card">
+            <p>Significativas</p>
+            <h2 id="totalSignificativas"><i class="fas fa-exclamation-triangle"></i> 0</h2>
+            <span class="badge significativas"><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
     </div>
 
     <!-- FILTROS + MAPA -->
@@ -225,8 +226,7 @@ function updateDateTime() {
     const now = new Date();
     const date = now.toLocaleDateString('pt-PT');
     const time = now.toLocaleTimeString('pt-PT');
-    document.getElementById('datetime').innerText =
-        `${date} ${time} - Última atualização: ${time}`;
+    document.getElementById('datetime').innerText = `${date} ${time} - Última atualização: ${time}`;
 }
 setInterval(updateDateTime, 1000);
 updateDateTime();
@@ -373,7 +373,7 @@ function updateDashboard(features) {
     // Atualizar os cartões
     document.getElementById('totalOcorrencias').innerHTML = `<i class="fas fa-bullseye"></i> ${features.length}`;
     document.getElementById('totalAereos').innerHTML = `<i class="fas fa-helicopter"></i> ${totalAereos}`;
-    document.getElementById('totalOperacionais').innerHTML = `<i class="fas fa-user-shield"></i> ${totalOperacionais}`;
+    document.getElementById('totalOperacionais').innerHTML = `<i class="fas fa-hat-firefighter"></i> ${totalOperacionais}`;
     document.getElementById('totalVeiculos').innerHTML = `<i class="fas fa-truck"></i> ${totalVeiculos}`;
     document.getElementById('totalAquaticos').innerHTML = `<i class="fas fa-water"></i> ${totalAquaticos}`;
     document.getElementById('totalIncendios').innerHTML = `<i class="fas fa-fire"></i> ${totalIncendios}`;
