@@ -75,6 +75,7 @@ body {
     color: #1e3a8a;
 }
 
+/* ===== CARTÕES ===== */
 .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -102,7 +103,51 @@ body {
     color: #111827;
 }
 
-/* ===== TABLE ===== */
+/* ===== FILTROS + MAPA ===== */
+.filters-map-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.filters {
+    flex: 1 1 250px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.filters label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.filters select {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+}
+
+.filters button {
+    padding: 8px 12px;
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.map-container {
+    flex: 3 1 600px;
+}
+
+/* ===== TABELA ===== */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -159,8 +204,8 @@ footer {
 
 <div class="container">
 
+    <!-- CARTÕES -->
     <div class="section-title">Indicadores Gerais</div>
-
     <div class="cards">
         <div class="card"><p>Total Ocorrências</p><h2 id="totalOcorrencias">0</h2></div>
         <div class="card"><p>Total Operacionais</p><h2 id="totalOperacionais">0</h2></div>
@@ -171,8 +216,41 @@ footer {
         <div class="card"><p>Significativas</p><h2 id="totalSignificativas">0</h2></div>
     </div>
 
-    <div class="section-title">Lista de Ocorrências</div>
+    <!-- FILTROS + MAPA -->
+    <div class="filters-map-container">
+        <div class="filters">
+            <div class="section-title">Filtros</div>
+            <label>Região: 
+                <select id="filterRegiao">
+                    <option value="">Todas</option>
+                </select>
+            </label>
+            <label>Concelho: 
+                <select id="filterConcelho">
+                    <option value="">Todos</option>
+                </select>
+            </label>
+            <label>Freguesia: 
+                <select id="filterFreguesia">
+                    <option value="">Todas</option>
+                </select>
+            </label>
+            <label>Tipo Ocorrência: 
+                <select id="filterTipo">
+                    <option value="">Todos</option>
+                </select>
+            </label>
+            <button id="applyFilters">Aplicar Filtros</button>
+        </div>
 
+        <div class="map-container">
+            <div class="section-title">Mapa de Ocorrências</div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="section-title">Lista de Ocorrências</div>
     <table>
         <thead>
             <tr>
@@ -192,9 +270,6 @@ footer {
         <tbody id="tableBody"></tbody>
     </table>
 
-    <div class="section-title">Mapa de Ocorrências</div>
-    <div id="map"></div>
-
 </div>
 
 <footer>
@@ -202,7 +277,6 @@ footer {
 </footer>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script>
 /* ===== DATA & HORA ===== */
 function updateDateTime() {
@@ -227,7 +301,6 @@ function setStatusOnline() {
     dot.classList.remove("offline");
     dot.classList.add("online");
 }
-
 function setStatusOffline() {
     const dot = document.getElementById("statusDot");
     dot.classList.remove("online");
@@ -235,8 +308,8 @@ function setStatusOffline() {
 }
 
 /* ===== FETCH DADOS ===== */
+let allFeatures = [];
 async function fetchGeoData() {
-
     const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson";
 
     try {
@@ -244,76 +317,109 @@ async function fetchGeoData() {
         if (!res.ok) throw new Error("Erro HTTP");
 
         const data = await res.json();
-        const features = data.features || [];
-
+        allFeatures = data.features || [];
         setStatusOnline();
-
-        // Totais
-        let totalAereos = 0;
-        let totalOperacionais = 0;
-        let totalVeiculos = 0;
-        let totalAquaticos = 0;
-        let totalIncendios = 0;
-        let totalSignificativas = 0;
-
-        const table = document.getElementById('tableBody');
-        table.innerHTML = "";
-
-        features.forEach((f) => {
-            const p = f.properties || {};
-            const coords = f.geometry?.coordinates;
-
-            // Totais
-            totalAereos += Number(p.MeiosAereos || 0);
-            totalOperacionais += Number(p.Operacionais || 0);
-            totalVeiculos += Number(p.MeiosTerrestres || 0);
-            totalAquaticos += Number(p.MeiosAquaticos || 0);
-
-            if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
-            if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
-
-            // Tabela com campos corretos
-            table.innerHTML += `
-                <tr>
-                    <td>${p.Data || "-"}</td>
-                    <td>${p.Regiao || "-"}</td>
-                    <td>${p.Concelho || "-"}</td>
-                    <td>${p.Freguesia || "-"}</td>
-                    <td>${p.Localidade || "-"}</td>
-                    <td>${p.Tipo || "-"}</td>
-                    <td>${p.EstadoOcorrencia || "-"}</td>
-                    <td>${p.Operacionais || 0}</td>
-                    <td>${p.MeiosTerrestres || 0}</td>
-                    <td>${p.MeiosAereos || 0}</td>
-                    <td>${p.MeiosAquaticos || 0}</td>
-                </tr>
-            `;
-
-            // Marker no mapa
-            if (coords) {
-                L.marker([coords[1], coords[0]]).addTo(map);
-            }
-        });
-
-        // Atualizar cartões
-        document.getElementById('totalOcorrencias').innerText = features.length;
-        document.getElementById('totalAereos').innerText = totalAereos;
-        document.getElementById('totalOperacionais').innerText = totalOperacionais;
-        document.getElementById('totalVeiculos').innerText = totalVeiculos;
-        document.getElementById('totalAquaticos').innerText = totalAquaticos;
-        document.getElementById('totalIncendios').innerText = totalIncendios;
-        document.getElementById('totalSignificativas').innerText = totalSignificativas;
-
-    } catch (error) {
-        console.error("Erro na API:", error);
+        populateFilters();
+        applyFilters();
+    } catch (err) {
+        console.error(err);
         setStatusOffline();
     }
 }
 
-// Atualizar dados a cada 60s
+/* ===== POPULAR FILTROS ===== */
+function populateFilters() {
+    const regiaoSet = new Set(), concelhoSet = new Set(), freguesiaSet = new Set(), tipoSet = new Set();
+    allFeatures.forEach(f => {
+        const p = f.properties;
+        if (p.Regiao) regiaoSet.add(p.Regiao);
+        if (p.Concelho) concelhoSet.add(p.Concelho);
+        if (p.Freguesia) freguesiaSet.add(p.Freguesia);
+        if (p.Tipo) tipoSet.add(p.Tipo);
+    });
+
+    const addOptions = (selectId, values) => {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = `<option value="">Todos</option>` + Array.from(values).map(v => `<option value="${v}">${v}</option>`).join('');
+    };
+
+    addOptions('filterRegiao', regiaoSet);
+    addOptions('filterConcelho', concelhoSet);
+    addOptions('filterFreguesia', freguesiaSet);
+    addOptions('filterTipo', tipoSet);
+}
+
+/* ===== APLICAR FILTROS ===== */
+document.getElementById('applyFilters').addEventListener('click', applyFilters);
+
+function applyFilters() {
+    const fRegiao = document.getElementById('filterRegiao').value;
+    const fConcelho = document.getElementById('filterConcelho').value;
+    const fFreguesia = document.getElementById('filterFreguesia').value;
+    const fTipo = document.getElementById('filterTipo').value;
+
+    const filtered = allFeatures.filter(f => {
+        const p = f.properties;
+        return (!fRegiao || p.Regiao === fRegiao) &&
+               (!fConcelho || p.Concelho === fConcelho) &&
+               (!fFreguesia || p.Freguesia === fFreguesia) &&
+               (!fTipo || p.Tipo === fTipo);
+    });
+
+    updateDashboard(filtered);
+}
+
+/* ===== ATUALIZAR DASHBOARD ===== */
+function updateDashboard(features) {
+    let totalAereos = 0, totalOperacionais = 0, totalVeiculos = 0, totalAquaticos = 0, totalIncendios = 0, totalSignificativas = 0;
+
+    const table = document.getElementById('tableBody');
+    table.innerHTML = "";
+    map.eachLayer(l => l instanceof L.Marker && map.removeLayer(l)); // remove markers
+
+    features.forEach(f => {
+        const p = f.properties;
+        const coords = f.geometry?.coordinates;
+
+        totalAereos += Number(p.MeiosAereos || 0);
+        totalOperacionais += Number(p.Operacionais || 0);
+        totalVeiculos += Number(p.MeiosTerrestres || 0);
+        totalAquaticos += Number(p.MeiosAquaticos || 0);
+        if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
+        if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
+
+        table.innerHTML += `
+            <tr>
+                <td>${p.Data || "-"}</td>
+                <td>${p.Regiao || "-"}</td>
+                <td>${p.Concelho || "-"}</td>
+                <td>${p.Freguesia || "-"}</td>
+                <td>${p.Localidade || "-"}</td>
+                <td>${p.Tipo || "-"}</td>
+                <td>${p.EstadoOcorrencia || "-"}</td>
+                <td>${p.Operacionais || 0}</td>
+                <td>${p.MeiosTerrestres || 0}</td>
+                <td>${p.MeiosAereos || 0}</td>
+                <td>${p.MeiosAquaticos || 0}</td>
+            </tr>
+        `;
+
+        if (coords) L.marker([coords[1], coords[0]]).addTo(map);
+    });
+
+    document.getElementById('totalOcorrencias').innerText = features.length;
+    document.getElementById('totalAereos').innerText = totalAereos;
+    document.getElementById('totalOperacionais').innerText = totalOperacionais;
+    document.getElementById('totalVeiculos').innerText = totalVeiculos;
+    document.getElementById('totalAquaticos').innerText = totalAquaticos;
+    document.getElementById('totalIncendios').innerText = totalIncendios;
+    document.getElementById('totalSignificativas').innerText = totalSignificativas;
+}
+
+// FETCH inicial
 fetchGeoData();
 setInterval(fetchGeoData, 60000);
-</script>
 
+</script>
 </body>
 </html>
