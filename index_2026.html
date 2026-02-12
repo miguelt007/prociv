@@ -363,11 +363,22 @@ function applyFilters() {
 
 /* ===== ATUALIZAR DASHBOARD ===== */
 function updateDashboard(features) {
-    let totalAereos = 0, totalOperacionais = 0, totalVeiculos = 0, totalAquaticos = 0, totalIncendios = 0, totalSignificativas = 0;
+    let totalAereos = 0,
+        totalOperacionais = 0,
+        totalVeiculos = 0,
+        totalAquaticos = 0,
+        totalIncendios = 0,
+        totalSignificativas = 0;
 
     const table = document.getElementById('tableBody');
     table.innerHTML = "";
-    map.eachLayer(l => l instanceof L.Marker && map.removeLayer(l)); // remove markers antigos
+
+    // Remover marcadores antigos
+    map.eachLayer(layer => {
+        if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+        }
+    });
 
     features.forEach(f => {
         const p = f.properties;
@@ -377,8 +388,18 @@ function updateDashboard(features) {
         totalOperacionais += Number(p.Operacionais || 0);
         totalVeiculos += Number(p.MeiosTerrestres || 0);
         totalAquaticos += Number(p.MeiosAquaticos || 0);
-        if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
-        if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
+
+        // 🔥 CONTAGEM CORRETA DOS INCÊNDIOS
+        if (p.Especie && 
+            p.Especie.toString().toLowerCase().includes("incêndio")) {
+            totalIncendios++;
+        }
+
+        if (p.Significativa === 1 || 
+            (p.Significativa && 
+             p.Significativa.toString().toLowerCase() === "sim")) {
+            totalSignificativas++;
+        }
 
         table.innerHTML += `
             <tr>
@@ -396,9 +417,12 @@ function updateDashboard(features) {
             </tr>
         `;
 
-        if (coords) L.marker([coords[1], coords[0]]).addTo(map);
+        if (coords) {
+            L.marker([coords[1], coords[0]]).addTo(map);
+        }
     });
 
+    // Atualizar cartões
     document.getElementById('totalOcorrencias').innerText = features.length;
     document.getElementById('totalAereos').innerText = totalAereos;
     document.getElementById('totalOperacionais').innerText = totalOperacionais;
@@ -407,7 +431,6 @@ function updateDashboard(features) {
     document.getElementById('totalIncendios').innerText = totalIncendios;
     document.getElementById('totalSignificativas').innerText = totalSignificativas;
 }
-
 // FETCH inicial
 fetchGeoData();
 setInterval(fetchGeoData, 60000);
