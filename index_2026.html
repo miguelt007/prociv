@@ -221,24 +221,16 @@ footer {
         <div class="filters">
             <div class="section-title">Filtros</div>
             <label>Região: 
-                <select id="filterRegiao">
-                    <option value="">Todas</option>
-                </select>
+                <select id="filterRegiao"><option value="">Todas</option></select>
             </label>
             <label>Concelho: 
-                <select id="filterConcelho">
-                    <option value="">Todos</option>
-                </select>
+                <select id="filterConcelho"><option value="">Todos</option></select>
             </label>
             <label>Freguesia: 
-                <select id="filterFreguesia">
-                    <option value="">Todas</option>
-                </select>
+                <select id="filterFreguesia"><option value="">Todas</option></select>
             </label>
             <label>Tipo Ocorrência: 
-                <select id="filterTipo">
-                    <option value="">Todos</option>
-                </select>
+                <select id="filterTipo"><option value="">Todos</option></select>
             </label>
             <button id="applyFilters">Aplicar Filtros</button>
         </div>
@@ -320,7 +312,7 @@ async function fetchGeoData() {
         allFeatures = data.features || [];
         setStatusOnline();
         populateFilters();
-        applyFilters();
+        applyFilters(); // mostra todos os dados na primeira carga
     } catch (err) {
         console.error(err);
         setStatusOffline();
@@ -375,7 +367,7 @@ function updateDashboard(features) {
 
     const table = document.getElementById('tableBody');
     table.innerHTML = "";
-    map.eachLayer(l => l instanceof L.Marker && map.removeLayer(l)); // remove markers
+    map.eachLayer(l => l instanceof L.Marker && map.removeLayer(l)); // remove markers antigos
 
     features.forEach(f => {
         const p = f.properties;
@@ -419,7 +411,6 @@ function updateDashboard(features) {
 // FETCH inicial
 fetchGeoData();
 setInterval(fetchGeoData, 60000);
-
 </script>
 </body>
 </html>
