@@ -259,7 +259,7 @@ async function fetchGeoData() {
         const table = document.getElementById('tableBody');
         table.innerHTML = "";
 
-        features.forEach((f, i) => {
+        features.forEach((f) => {
             const p = f.properties || {};
             const coords = f.geometry?.coordinates;
 
@@ -272,7 +272,7 @@ async function fetchGeoData() {
             if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
             if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
 
-            // Tabela
+            // Tabela com campos corretos
             table.innerHTML += `
                 <tr>
                     <td>${p.Data || "-"}</td>
@@ -281,7 +281,7 @@ async function fetchGeoData() {
                     <td>${p.Freguesia || "-"}</td>
                     <td>${p.Localidade || "-"}</td>
                     <td>${p.Tipo || "-"}</td>
-                    <td>${p.Estado || "-"}</td>
+                    <td>${p.EstadoOcorrencia || "-"}</td>
                     <td>${p.Operacionais || 0}</td>
                     <td>${p.MeiosTerrestres || 0}</td>
                     <td>${p.MeiosAereos || 0}</td>
