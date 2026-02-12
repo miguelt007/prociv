@@ -212,7 +212,7 @@ footer {
         <div class="card"><p>Total Veículos</p><h2 id="totalVeiculos">0</h2></div>
         <div class="card"><p>Total Aéreos</p><h2 id="totalAereos">0</h2></div>
         <div class="card"><p>Total Aquáticos</p><h2 id="totalAquaticos">0</h2></div>
-        <div class="card"><p>Total Incêndios / Detritos</p><h2 id="totalIncendios">0</h2></div>
+        <div class="card"><p>Total Incêndios / Detritos / Equipamentos</p><h2 id="totalIncendios">0</h2></div>
         <div class="card"><p>Significativas</p><h2 id="totalSignificativas">0</h2></div>
     </div>
 
@@ -312,7 +312,7 @@ async function fetchGeoData() {
         allFeatures = data.features || [];
         setStatusOnline();
         populateFilters();
-        applyFilters(); // mostra todos os dados na primeira carga
+        applyFilters();
     } catch (err) {
         console.error(err);
         setStatusOffline();
@@ -388,13 +388,14 @@ function updateDashboard(features) {
         totalVeiculos += Number(p.MeiosTerrestres || 0);
         totalAquaticos += Number(p.MeiosAquaticos || 0);
 
-        // 🔥 Total Incêndios / Detritos
+        // 🔥 Total Incêndios / Detritos / Equipamentos
         if (p.Especie) {
             const especieLower = p.Especie.toString().toLowerCase();
             if (
                 especieLower.includes("incêndio") ||
                 especieLower.includes("detritos confinados") ||
-                especieLower.includes("detritos não confinados")
+                especieLower.includes("detritos não confinados") ||
+                especieLower.includes("equipamentos")
             ) {
                 totalIncendios++;
             }
