@@ -233,7 +233,8 @@ function setStatusOffline() {
 /* ===== FETCH DADOS ===== */
 async function fetchGeoData() {
 
-    const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=0%3D0&outFields=*&f=geojson";
+    // URL corrigida para retornar dados
+    const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson";
 
     try {
         const res = await fetch(url);
@@ -244,7 +245,7 @@ async function fetchGeoData() {
 
         setStatusOnline();
 
-        // Totais (ainda podemos corrigir depois)
+        // Totais
         let totalAereos = 0;
         let totalOperacionais = 0;
         let totalVeiculos = 0;
@@ -268,7 +269,7 @@ async function fetchGeoData() {
             if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
             if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
 
-            // Preencher tabela com os novos campos
+            // Tabela
             table.innerHTML += `
                 <tr>
                     <td>${p.Data || "-"}</td>
@@ -281,7 +282,7 @@ async function fetchGeoData() {
                 </tr>
             `;
 
-            // Marker no mapa
+            // Marker
             if (coords) {
                 L.marker([coords[1], coords[0]]).addTo(map);
             }
@@ -302,6 +303,7 @@ async function fetchGeoData() {
     }
 }
 
+// Atualizar dados a cada 60s
 fetchGeoData();
 setInterval(fetchGeoData, 60000);
 </script>
