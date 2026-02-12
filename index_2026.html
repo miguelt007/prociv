@@ -176,10 +176,13 @@ footer {
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Tipo</th>
-                <th>Local</th>
-                <th>Data</th>
+                <th>Data / Hora</th>
+                <th>Distrito</th>
+                <th>Concelho</th>
+                <th>Freguesia</th>
+                <th>Localização</th>
+                <th>Natureza</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -241,6 +244,7 @@ async function fetchGeoData() {
 
         setStatusOnline();
 
+        // Totais (ainda podemos corrigir depois)
         let totalAereos = 0;
         let totalOperacionais = 0;
         let totalVeiculos = 0;
@@ -255,33 +259,29 @@ async function fetchGeoData() {
             const p = f.properties || {};
             const coords = f.geometry?.coordinates;
 
-            // Totais principais
+            // Totais
             totalAereos += Number(p.MeiosAereos || 0);
             totalOperacionais += Number(p.Operacionais || 0);
             totalVeiculos += Number(p.MeiosTerrestres || 0);
             totalAquaticos += Number(p.MeiosAquaticos || 0);
 
-            // Contar Incêndios
-            if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) {
-                totalIncendios++;
-            }
+            if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) totalIncendios++;
+            if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) totalSignificativas++;
 
-            // Contar Significativas
-            if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) {
-                totalSignificativas++;
-            }
-
-            // Preencher tabela
+            // Preencher tabela com os novos campos
             table.innerHTML += `
                 <tr>
-                    <td>${i+1}</td>
-                    <td>${p.Tipo || "-"}</td>
-                    <td>${p.Local || "-"}</td>
                     <td>${p.Data || "-"}</td>
+                    <td>${p.Distrito || "-"}</td>
+                    <td>${p.Concelho || "-"}</td>
+                    <td>${p.Freguesia || "-"}</td>
+                    <td>${p.Local || "-"}</td>
+                    <td>${p.Tipo || "-"}</td>
+                    <td>${p.Estado || "-"}</td>
                 </tr>
             `;
 
-            // Adicionar marker no mapa
+            // Marker no mapa
             if (coords) {
                 L.marker([coords[1], coords[0]]).addTo(map);
             }
