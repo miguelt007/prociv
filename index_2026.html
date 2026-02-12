@@ -245,6 +245,7 @@ async function fetchGeoData() {
         let totalOperacionais = 0;
         let totalVeiculos = 0;
         let totalIncendios = 0;
+        let totalSignificativas = 0;
 
         const table = document.getElementById('tableBody');
         table.innerHTML = "";
@@ -253,14 +254,22 @@ async function fetchGeoData() {
             const p = f.properties || {};
             const coords = f.geometry?.coordinates;
 
+            // Totais principais
             totalAereos += Number(p.MeiosAereos || 0);
             totalOperacionais += Number(p.Operacionais || 0);
             totalVeiculos += Number(p.MeiosTerrestres || 0);
 
+            // Contar Incêndios
             if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) {
                 totalIncendios++;
             }
 
+            // Contar Significativas
+            if (p.Significativa === 1 || (p.Significativa && p.Significativa.toString().toLowerCase() === "sim")) {
+                totalSignificativas++;
+            }
+
+            // Preencher tabela
             table.innerHTML += `
                 <tr>
                     <td>${i+1}</td>
@@ -270,16 +279,19 @@ async function fetchGeoData() {
                 </tr>
             `;
 
+            // Adicionar marker no mapa
             if (coords) {
                 L.marker([coords[1], coords[0]]).addTo(map);
             }
         });
 
+        // Atualizar cartões
         document.getElementById('totalOcorrencias').innerText = features.length;
         document.getElementById('totalAereos').innerText = totalAereos;
         document.getElementById('totalOperacionais').innerText = totalOperacionais;
         document.getElementById('totalVeiculos').innerText = totalVeiculos;
         document.getElementById('totalIncendios').innerText = totalIncendios;
+        document.getElementById('totalSignificativas').innerText = totalSignificativas;
 
     } catch (error) {
         console.error("Erro na API:", error);
