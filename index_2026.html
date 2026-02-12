@@ -212,7 +212,7 @@ footer {
         <div class="card"><p>Total Veículos</p><h2 id="totalVeiculos">0</h2></div>
         <div class="card"><p>Total Aéreos</p><h2 id="totalAereos">0</h2></div>
         <div class="card"><p>Total Aquáticos</p><h2 id="totalAquaticos">0</h2></div>
-        <div class="card"><p>Total Incêndios</p><h2 id="totalIncendios">0</h2></div>
+        <div class="card"><p>Total Incêndios / Detritos</p><h2 id="totalIncendios">0</h2></div>
         <div class="card"><p>Significativas</p><h2 id="totalSignificativas">0</h2></div>
     </div>
 
@@ -373,7 +373,6 @@ function updateDashboard(features) {
     const table = document.getElementById('tableBody');
     table.innerHTML = "";
 
-    // Remover marcadores antigos
     map.eachLayer(layer => {
         if (layer instanceof L.Marker) {
             map.removeLayer(layer);
@@ -389,10 +388,16 @@ function updateDashboard(features) {
         totalVeiculos += Number(p.MeiosTerrestres || 0);
         totalAquaticos += Number(p.MeiosAquaticos || 0);
 
-        // 🔥 CONTAGEM CORRETA DOS INCÊNDIOS
-        if (p.Especie && 
-            p.Especie.toString().toLowerCase().includes("incêndio")) {
-            totalIncendios++;
+        // 🔥 Total Incêndios / Detritos
+        if (p.Especie) {
+            const especieLower = p.Especie.toString().toLowerCase();
+            if (
+                especieLower.includes("incêndio") ||
+                especieLower.includes("detritos confinados") ||
+                especieLower.includes("detritos não confinados")
+            ) {
+                totalIncendios++;
+            }
         }
 
         if (p.Significativa === 1 || 
@@ -422,7 +427,6 @@ function updateDashboard(features) {
         }
     });
 
-    // Atualizar cartões
     document.getElementById('totalOcorrencias').innerText = features.length;
     document.getElementById('totalAereos').innerText = totalAereos;
     document.getElementById('totalOperacionais').innerText = totalOperacionais;
@@ -431,6 +435,7 @@ function updateDashboard(features) {
     document.getElementById('totalIncendios').innerText = totalIncendios;
     document.getElementById('totalSignificativas').innerText = totalSignificativas;
 }
+
 // FETCH inicial
 fetchGeoData();
 setInterval(fetchGeoData, 60000);
