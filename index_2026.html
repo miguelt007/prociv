@@ -244,6 +244,7 @@ async function fetchGeoData() {
         let totalAereos = 0;
         let totalOperacionais = 0;
         let totalVeiculos = 0;
+        let totalAquaticos = 0;
         let totalIncendios = 0;
         let totalSignificativas = 0;
 
@@ -258,6 +259,7 @@ async function fetchGeoData() {
             totalAereos += Number(p.MeiosAereos || 0);
             totalOperacionais += Number(p.Operacionais || 0);
             totalVeiculos += Number(p.MeiosTerrestres || 0);
+            totalAquaticos += Number(p.MeiosAquaticos || 0);
 
             // Contar Incêndios
             if (p.Tipo && p.Tipo.toLowerCase().includes("incêndio")) {
@@ -290,6 +292,7 @@ async function fetchGeoData() {
         document.getElementById('totalAereos').innerText = totalAereos;
         document.getElementById('totalOperacionais').innerText = totalOperacionais;
         document.getElementById('totalVeiculos').innerText = totalVeiculos;
+        document.getElementById('totalAquaticos').innerText = totalAquaticos;
         document.getElementById('totalIncendios').innerText = totalIncendios;
         document.getElementById('totalSignificativas').innerText = totalSignificativas;
 
