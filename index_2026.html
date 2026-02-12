@@ -362,6 +362,18 @@ function applyFilters() {
     updateDashboard(filtered);
 }
 
+/* ===== ESTILOS PARA ESTADO ===== */
+function getEstadoStyle(estado) {
+    if (!estado) return {background:"#d1d5db", color:"#000"}; // padrão cinza
+    const e = estado.toLowerCase();
+    if (e === "em curso") return {background:"#ef4444", color:"#fff"};
+    if (e === "despacho") return {background:"#f97316", color:"#000"};
+    if (e === "despacho de 1º alerta") return {background:"#facc15", color:"#000"};
+    if (e === "em resolução") return {background:"#3b82f6", color:"#fff"};
+    if (e === "em conclusão") return {background:"#22c55e", color:"#000"};
+    return {background:"#d1d5db", color:"#000"};
+}
+
 /* ===== ATUALIZAR DASHBOARD ===== */
 function updateDashboard(features) {
     let totalAereos = 0,
@@ -408,6 +420,9 @@ function updateDashboard(features) {
             totalSignificativas++;
         }
 
+        // Estado colorido
+        const estadoStyle = getEstadoStyle(p.EstadoOcorrencia);
+
         table.innerHTML += `
             <tr>
                 <td>${p.Data || "-"}</td>
@@ -416,7 +431,9 @@ function updateDashboard(features) {
                 <td>${p.Freguesia || "-"}</td>
                 <td>${p.Localidade || "-"}</td>
                 <td>${p.Tipo || "-"}</td>
-                <td>${p.EstadoOcorrencia || "-"}</td>
+                <td style="background-color:${estadoStyle.background}; color:${estadoStyle.color};">
+                    ${p.EstadoOcorrencia || "-"}
+                </td>
                 <td>${p.Operacionais || 0}</td>
                 <td>${p.MeiosTerrestres || 0}</td>
                 <td>${p.MeiosAereos || 0}</td>
@@ -424,6 +441,7 @@ function updateDashboard(features) {
             </tr>
         `;
 
+        // Popup no mapa
         if (coords) {
             const marker = L.marker([coords[1], coords[0]]).addTo(map);
             const popupContent = `
