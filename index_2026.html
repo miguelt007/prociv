@@ -42,10 +42,19 @@ body {
 .dot {
     width: 10px;
     height: 10px;
-    background: #22c55e;
     border-radius: 50%;
-    box-shadow: 0 0 8px #22c55e;
+    box-shadow: 0 0 8px;
     animation: pulse 1.5s infinite;
+}
+
+.dot.online {
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+}
+
+.dot.offline {
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
 }
 
 @keyframes pulse {
@@ -139,7 +148,7 @@ footer {
 
 <header class="topbar">
     <div class="status">
-        <span class="dot"></span>
+        <span id="statusDot" class="dot online"></span>
         <span id="datetime"></span>
     </div>
 
@@ -149,7 +158,6 @@ footer {
 </header>
 
 <div class="container">
-
     <div class="section-title">Indicadores Gerais</div>
 
     <div class="cards">
@@ -178,7 +186,6 @@ footer {
 
     <div class="section-title">Mapa de Ocorrências</div>
     <div id="map"></div>
-
 </div>
 
 <footer>
@@ -191,23 +198,32 @@ footer {
 /* ===== DATA & HORA ===== */
 function updateDateTime() {
     const now = new Date();
-
     const date = now.toLocaleDateString('pt-PT');
     const time = now.toLocaleTimeString('pt-PT');
-
     document.getElementById('datetime').innerText =
-        `${date} ${time} | Sistema Online`;
+        `${date} ${time}`;
 }
-
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
 /* ===== MAPA ===== */
 const map = L.map('map').setView([39.5, -8.0], 6);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
+
+/* ===== ESTADO API ===== */
+function setStatusOnline() {
+    const dot = document.getElementById("statusDot");
+    dot.classList.remove("offline");
+    dot.classList.add("online");
+}
+
+function setStatusOffline() {
+    const dot = document.getElementById("statusDot");
+    dot.classList.remove("online");
+    dot.classList.add("offline");
+}
 
 /* ===== FETCH DADOS ===== */
 async function fetchGeoData() {
@@ -216,60 +232,24 @@ async function fetchGeoData() {
 
     try {
         const res = await fetch(url);
+
+        if (!res.ok) throw new Error("Erro HTTP");
+
         const data = await res.json();
         const features = data.features || [];
 
+        setStatusOnline();
+
         document.getElementById('totalOcorrencias').innerText = features.length;
 
-        let totalOperacionais = 0;
-        let totalVeiculos = 0;
-        let totalAereos = 0;
-        let totalAquaticos = 0;
-        let totalIncendios = 0;
-        let totalSignificativas = 0;
-
-        const table = document.getElementById('tableBody');
-        table.innerHTML = "";
-
-        features.forEach((f, i) => {
-            const p = f.properties || {};
-            const coords = f.geometry?.coordinates;
-
-            totalOperacionais += Number(p.operacionais || 0);
-            totalVeiculos += Number(p.veiculos || 0);
-            totalAereos += Number(p.aereos || 0);
-            totalAquaticos += Number(p.aquaticos || 0);
-
-            if (p.tipo && p.tipo.toLowerCase().includes("incêndio")) totalIncendios++;
-            if (p.significativa === 1 || p.significativa === "Sim") totalSignificativas++;
-
-            table.innerHTML += `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${p.tipo || "-"}</td>
-                    <td>${p.local || "-"}</td>
-                    <td>${p.data || "-"}</td>
-                </tr>
-            `;
-
-            if (coords) {
-                L.marker([coords[1], coords[0]]).addTo(map);
-            }
-        });
-
-        document.getElementById('totalOperacionais').innerText = totalOperacionais;
-        document.getElementById('totalVeiculos').innerText = totalVeiculos;
-        document.getElementById('totalAereos').innerText = totalAereos;
-        document.getElementById('totalAquaticos').innerText = totalAquaticos;
-        document.getElementById('totalIncendios').innerText = totalIncendios;
-        document.getElementById('totalSignificativas').innerText = totalSignificativas;
-
     } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error("Erro na API:", error);
+        setStatusOffline();
     }
 }
 
 fetchGeoData();
+setInterval(fetchGeoData, 60000); // atualiza a cada 60 segundos
 </script>
 
 </body>
