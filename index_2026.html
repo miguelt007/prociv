@@ -177,7 +177,7 @@ footer {
         <thead>
             <tr>
                 <th>Data / Hora</th>
-                <th>Distrito</th>
+                <th>Região</th>
                 <th>Concelho</th>
                 <th>Freguesia</th>
                 <th>Localização</th>
@@ -237,7 +237,6 @@ function setStatusOffline() {
 /* ===== FETCH DADOS ===== */
 async function fetchGeoData() {
 
-    // URL corrigida
     const url = "https://services-eu1.arcgis.com/VlrHb7fn5ewYhX6y/arcgis/rest/services/OcorrenciasSite/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson";
 
     try {
@@ -277,10 +276,10 @@ async function fetchGeoData() {
             table.innerHTML += `
                 <tr>
                     <td>${p.Data || "-"}</td>
-                    <td>${p.Distrito || "-"}</td>
+                    <td>${p.Regiao || "-"}</td>
                     <td>${p.Concelho || "-"}</td>
                     <td>${p.Freguesia || "-"}</td>
-                    <td>${p.Local || "-"}</td>
+                    <td>${p.Localidade || "-"}</td>
                     <td>${p.Tipo || "-"}</td>
                     <td>${p.Estado || "-"}</td>
                     <td>${p.Operacionais || 0}</td>
@@ -290,7 +289,7 @@ async function fetchGeoData() {
                 </tr>
             `;
 
-            // Marker
+            // Marker no mapa
             if (coords) {
                 L.marker([coords[1], coords[0]]).addTo(map);
             }
